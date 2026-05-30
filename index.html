@@ -2503,7 +2503,7 @@ function renderChordResult(raw) {
     html += `</div>`;
     // Botón externo siempre disponible como referencia adicional
     const ugQuery = encodeURIComponent(raw.trim() + ' chord');
-    html += `<a class="btn-external-chord" href="https://www.ultimate-guitar.com/search.php?search_type=chords&value=${ugQuery}" target="_blank" rel="noopener">🔗 Ver más en Ultimate Guitar</a>`;
+    html += `<a class="btn-external-chord" href="https://escueladeguitarristas.com/acordes" target="_blank" rel="noopener">🔗 Ver más en Escuela de Guitarristas</a>`;
     html += `</div>`;
     result.innerHTML = html;
   } else {
@@ -2512,8 +2512,8 @@ function renderChordResult(raw) {
     result.innerHTML = `<div class="chord-not-found">
       <div style="font-size:1.8rem;margin-bottom:0.5rem">🤔</div>
       <div>No tengo el diagrama de <strong>${escapeHtml(raw)}</strong> en mi base de datos.</div>
-      <div style="margin-top:0.25rem;font-size:0.82rem;color:var(--text3)">Puedes buscarlo en Ultimate Guitar:</div>
-      <a class="btn-external-chord" href="https://www.ultimate-guitar.com/search.php?search_type=chords&value=${ugQuery}" target="_blank" rel="noopener">🔗 Buscar en Ultimate Guitar</a>
+      <div style="margin-top:0.25rem;font-size:0.82rem;color:var(--text3)">Puedes buscarlo en Escuela de Guitarristas:</div>
+      <a class="btn-external-chord" href="https://escueladeguitarristas.com/acordes" target="_blank" rel="noopener">🔗 Buscar en Escuela de Guitarristas</a>
     </div>`;
   }
 }
