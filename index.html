@@ -3,1438 +3,2106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Cancionero de Guitarra</title>
+<title>Cancionero del Grupo</title>
 <style>
+  /* ===== VARIABLES Y RESET ===== */
   :root {
-    --bg: #faf8f3;
-    --surface: #ffffff;
-    --surface-alt: #f1efe8;
-    --border: #d8d4c8;
-    --border-strong: #b4b2a9;
-    --text: #2c2c2a;
-    --text-muted: #5f5e5a;
-    --text-soft: #888780;
     --accent: #C2410C;
-    --accent-bg: #FFEDD5;
+    --accent-light: #EA580C;
+    --accent-dim: rgba(194,65,12,0.15);
+    --bg: #F7F5F2;
+    --bg2: #EDEAE5;
+    --bg3: #E0DCD5;
+    --surface: #FFFFFF;
+    --surface2: #F2EFE9;
+    --border: #D4CFC8;
+    --text: #1C1917;
+    --text2: #57534E;
+    --text3: #A8A29E;
     --chord-color: #C2410C;
-    --danger: #991B1B;
-    --success: #166534;
+    --section-color: #78716C;
+    --tab-active-bg: #FFFFFF;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
     --radius: 10px;
-    --radius-lg: 14px;
-    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'Courier Prime', 'Courier New', monospace;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
   }
+
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1a1a1a;
-      --surface: #262626;
-      --surface-alt: #1f1f1f;
-      --border: #3a3a3a;
-      --border-strong: #525252;
-      --text: #f5f5f5;
-      --text-muted: #a3a3a3;
-      --text-soft: #737373;
-      --accent: #FB923C;
-      --accent-bg: #431407;
-      --chord-color: #FB923C;
+      --bg: #171310;
+      --bg2: #1E1A17;
+      --bg3: #262119;
+      --surface: #242018;
+      --surface2: #2C2720;
+      --border: #3D3630;
+      --text: #F5F0EB;
+      --text2: #A8A29E;
+      --text3: #57534E;
+      --tab-active-bg: #2C2720;
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
     }
   }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: auto; } /* No usar smooth: pelea con el rAF de autoscroll */
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden; /* El scroll lo maneja #app y #song-scroll-area */
+  }
+
   body {
-    margin: 0;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    transition: background 0.3s;
   }
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 1rem 1rem 50vh; /* padding-bottom grande para poder scrollear el final */
+
+  /* ===== TIPOGRAFÍAS EXTERNAS ===== */
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+  /* ===== PANTALLA DE PERFIL ===== */
+  #profile-screen {
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--bg);
   }
-  /* Modo "tocando" (auto-scroll activo) — oculta cabecera para más espacio */
-  body.playing .app-header { display: none; }
-  body.playing .container { padding-top: 0.5rem; }
-  header.app-header {
+
+  .profile-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .profile-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .profile-header p {
+    color: var(--text2);
+    margin-top: 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 300;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    max-width: 600px;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .profile-grid {
+      grid-template-columns: repeat(4, 1fr);
+      max-width: 780px;
+    }
+  }
+
+  .profile-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent-dim);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .profile-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .profile-card:hover::before { opacity: 1; }
+
+  .profile-card:active {
+    transform: translateY(0);
+  }
+
+  .profile-icon {
+    font-size: 2.8rem;
+    line-height: 1;
+  }
+
+  .profile-instrument {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+
+  .profile-name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--text);
+    text-align: center;
+  }
+
+  /* ===== APP PRINCIPAL ===== */
+  #app {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem;
+    height: 56px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .back-btn:hover {
+    color: var(--text);
+    background: var(--bg2);
+  }
+
+  .header-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .current-profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 99px;
+    padding: 0.25rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .current-profile-badge:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ===== NAVEGACIÓN PRINCIPAL ===== */
+  #song-list-view {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #song-detail-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* ===== LISTA DE CANCIONES ===== */
+  .song-list-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .song-list-welcome {
+    margin-bottom: 1.75rem;
+  }
+
+  .song-list-welcome h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--text);
+  }
+
+  .song-list-welcome p {
+    color: var(--text2);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .songs-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .song-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+  }
+
+  .song-card:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .song-card-info { flex: 1; min-width: 0; }
+
+  .song-card-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .song-card-artist {
+    font-size: 0.82rem;
+    color: var(--text2);
+    margin-top: 0.15rem;
+  }
+
+  .song-card-arrow {
+    color: var(--text3);
+    font-size: 1.2rem;
+    margin-left: 1rem;
+    flex-shrink: 0;
+    transition: color 0.15s, transform 0.15s;
+  }
+
+  .song-card:hover .song-card-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  /* ===== TOOLBAR DE CANCIÓN ===== */
+  .song-toolbar {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .toolbar-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    padding: 0 0.2rem;
+  }
+
+  .tbtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.3rem 0.5rem;
+    border-radius: 5px;
+    transition: all 0.15s;
+    min-width: 28px;
+    text-align: center;
+    font-family: var(--font-body);
+  }
+
+  .tbtn:hover { background: var(--bg2); color: var(--text); }
+  .tbtn.active { background: var(--accent); color: white; }
+
+  .tbtn-icon {
+    font-size: 1rem;
+    padding: 0.3rem;
+  }
+
+  .transpose-display {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: center;
+    font-family: var(--font-mono);
+  }
+
+  .scroll-speed-display {
+    font-size: 0.75rem;
+    color: var(--text2);
+    min-width: 32px;
+    text-align: center;
+    font-family: var(--font-mono);
+  }
+
+  /* ===== PESTAÑAS DE INSTRUMENTO ===== */
+  .instrument-tabs {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+
+  .instrument-tabs::-webkit-scrollbar { display: none; }
+
+  .itab {
+    flex-shrink: 0;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .itab:hover {
+    color: var(--text);
+    background: var(--bg3);
+  }
+
+  .itab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--tab-active-bg);
+  }
+
+  .itab-icon { font-size: 1rem; }
+
+  /* ===== ÁREA DE SCROLL DE CONTENIDO ===== */
+  #song-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
+  /* ===== CONTENIDO DE PESTAÑA ===== */
+  .tab-content-wrapper {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ===== VISTA COMÚN — CANCIÓN ===== */
+  .song-view {
+    padding: 1.5rem 1.25rem 4rem;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .song-meta-header {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
   }
-  h1 {
-    font-size: 26px;
-    font-weight: 600;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  h1 .icon { font-size: 28px; }
-  .actions-bar { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  button, .btn {
-    font-family: inherit;
-    font-size: 14px;
-    background: var(--surface);
+  .song-main-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 700;
     color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1;
-  }
-  button:hover, .btn:hover { background: var(--surface-alt); border-color: var(--border-strong); }
-  button.primary { background: var(--accent); color: white; border-color: var(--accent); }
-  button.primary:hover { opacity: 0.9; background: var(--accent); }
-  button.icon-only {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    justify-content: center;
-  }
-  button.danger:hover { color: var(--danger); border-color: var(--danger); }
-
-  .search-box {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-family: inherit;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 1rem;
-    color: var(--text);
-  }
-  .search-box:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-
-  .song-list { display: grid; gap: 8px; }
-  .song-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 14px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .song-item:hover { background: var(--surface-alt); border-color: var(--border-strong); }
-  .song-info { min-width: 0; flex: 1; }
-  .song-title-text {
-    font-weight: 600;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .song-artist-text {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .song-actions { display: flex; gap: 4px; flex-shrink: 0; }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-muted);
-    background: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-lg);
-  }
-  .empty-state svg { display: block; margin: 0 auto 1rem; opacity: 0.4; }
-
-  /* Detail view */
-  .song-detail {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1rem;
-  }
-  .detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-    padding: 0.75rem 0.5rem;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--surface);
-    z-index: 10;
-    margin-top: -1rem;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    border-top-left-radius: var(--radius-lg);
-    border-top-right-radius: var(--radius-lg);
-    backdrop-filter: blur(8px);
-  }
-  .detail-titles {
-    min-width: 0;
-    flex: 1;
-  }
-  .detail-titles h2 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .detail-titles p {
-    color: var(--text-muted);
-    margin: 0;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .detail-controls {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
+    line-height: 1.2;
   }
 
-  /* Auto-scroll (prompter) */
-  .autoscroll-box {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--surface-alt);
-    padding: 3px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-  }
-  .autoscroll-box button {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    font-size: 15px;
-    font-weight: 600;
-    border-radius: 6px;
-  }
-  .autoscroll-box button:hover { background: var(--surface); }
-  .play-btn {
-    color: var(--accent);
-    font-size: 13px !important;
-  }
-  .play-btn.playing {
-    background: var(--accent) !important;
-    color: white;
-  }
-  .speed-val {
-    min-width: 30px;
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
+  .song-main-artist {
+    color: var(--text2);
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
   }
 
-  .transpose-box {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--surface-alt);
-    padding: 4px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-  }
-  .transpose-box button {
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    font-size: 18px;
-    font-weight: 600;
-  }
-  .transpose-box button:hover { background: var(--surface); }
-  .transpose-val {
-    min-width: 36px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
+  .song-edit-info {
+    font-size: 0.72rem;
+    color: var(--text3);
+    margin-top: 0.5rem;
   }
 
-  .notation-toggle {
-    background: var(--surface-alt);
-    border: 1px solid var(--border);
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .lyrics {
+  .song-content {
     font-family: var(--font-mono);
-    font-size: 15px;
-    line-height: 1.55;
+    font-size: 1rem;
+    line-height: 1.85;
     white-space: pre;
     overflow-x: auto;
-    padding: 1rem;
-    background: var(--surface-alt);
-    border-radius: var(--radius);
     color: var(--text);
-    cursor: pointer; /* indica que se puede tocar para pausar */
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
   }
-  .lyrics.size-1 { font-size: 17px; }
-  .lyrics.size-2 { font-size: 20px; line-height: 1.6; }
-  .lyrics.size-3 { font-size: 24px; line-height: 1.7; }
-  .lyrics.size-4 { font-size: 28px; line-height: 1.75; }
-  .chord {
+
+  /* En móvil: wrap para que los acordes no escapen lateralmente */
+  @media (max-width: 599px) {
+    .song-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.88rem;
+      line-height: 1.75;
+    }
+    .zoom-1 .song-content { font-size: 0.7rem; line-height: 1.55; }
+    .zoom-2 .song-content { font-size: 0.79rem; line-height: 1.65; }
+    .zoom-3 .song-content { font-size: 0.88rem; line-height: 1.75; }
+    .zoom-4 .song-content { font-size: 0.99rem; line-height: 1.85; }
+    .zoom-5 .song-content { font-size: 1.12rem; line-height: 1.95; }
+  }
+
+  /* Tablet */
+  @media (min-width: 600px) and (max-width: 1023px) {
+    .song-content {
+      font-size: 0.95rem;
+    }
+    .zoom-1 .song-content { font-size: 0.75rem; }
+    .zoom-2 .song-content { font-size: 0.85rem; }
+    .zoom-3 .song-content { font-size: 0.95rem; }
+    .zoom-4 .song-content { font-size: 1.07rem; }
+    .zoom-5 .song-content { font-size: 1.2rem; }
+  }
+
+  .song-content .chord-line {
     color: var(--chord-color);
     font-weight: 700;
   }
-  .section-label {
-    color: var(--text-muted);
+
+  .song-content .section-label {
+    color: var(--section-color);
     font-style: italic;
-    font-weight: 600;
+    font-weight: 400;
   }
 
-  /* Modal */
+  /* Zoom levels */
+  .zoom-1 .song-content { font-size: 0.78rem; line-height: 1.6; }
+  .zoom-2 .song-content { font-size: 0.88rem; line-height: 1.7; }
+  .zoom-3 .song-content { font-size: 1rem; line-height: 1.85; }
+  .zoom-4 .song-content { font-size: 1.14rem; line-height: 1.95; }
+  .zoom-5 .song-content { font-size: 1.3rem; line-height: 2.05; }
+
+  /* ===== PESTAÑA DE INSTRUMENTO ===== */
+  .annotation-view {
+    padding: 1.5rem 1.25rem 4rem;
+  }
+
+  .annotation-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    gap: 1rem;
+    color: var(--text2);
+  }
+
+  .annotation-empty-icon { font-size: 2.5rem; opacity: 0.4; }
+  .annotation-empty-msg { font-size: 0.95rem; line-height: 1.5; }
+
+  .btn-add-annotation {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+
+  .btn-add-annotation:hover { background: var(--accent-light); }
+
+  .annotation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .annotation-owner-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--text2);
+  }
+
+  .btn-edit-annotation {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+
+  .btn-edit-annotation:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .annotation-content {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: var(--text);
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 1.1rem;
+    border: 1px solid var(--border);
+  }
+
+  .annotation-edit-info {
+    font-size: 0.7rem;
+    color: var(--text3);
+    margin-top: 0.5rem;
+  }
+
+  /* ===== MODAL DE EDICIÓN ===== */
   .modal-overlay {
-    display: none;
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.55);
-    z-index: 100;
-    align-items: flex-start;
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
     justify-content: center;
-    padding: 2rem 1rem;
-    overflow-y: auto;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
   }
-  .modal-overlay.show { display: flex; }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  @media (min-width: 640px) {
+    .modal-overlay {
+      align-items: center;
+    }
+  }
+
   .modal {
     background: var(--surface);
-    border-radius: var(--radius-lg);
-    padding: 1.75rem;
+    border-radius: var(--radius) var(--radius) 0 0;
     width: 100%;
-    max-width: 640px;
-    border: 1px solid var(--border);
+    max-width: 720px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(40px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: var(--shadow-lg);
   }
-  .modal h3 { font-size: 20px; font-weight: 600; margin: 0 0 1rem; }
-  .modal label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin: 14px 0 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+  .modal-overlay.open .modal {
+    transform: translateY(0);
   }
-  .modal input, .modal textarea {
-    width: 100%;
-    font-family: var(--font-sans);
-    font-size: 15px;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
+
+  @media (min-width: 640px) {
+    .modal {
+      border-radius: var(--radius);
+      max-height: 85vh;
+    }
+  }
+
+  .modal-header {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
     color: var(--text);
   }
-  .modal input:focus, .modal textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  .modal textarea {
-    min-height: 280px;
-    font-family: var(--font-mono);
-    white-space: pre;
-    line-height: 1.5;
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.2rem;
+    transition: color 0.15s;
+    line-height: 1;
   }
-  .modal-actions {
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body {
+    padding: 1.25rem;
+    flex: 1;
+    overflow-y: auto;
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 1.25rem;
-    padding-top: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field-input:focus {
+    border-color: var(--accent);
+  }
+
+  .field-textarea {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    resize: vertical;
+    min-height: 280px;
+    tab-size: 2;
+  }
+
+  .modal-footer {
+    padding: 1rem 1.25rem;
     border-top: 1px solid var(--border);
-  }
-  .hint {
-    font-size: 12px;
-    color: var(--text-soft);
-    margin-top: 6px;
-    line-height: 1.4;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
   }
 
-  /* Print mode (útil para imprimir una canción) */
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+
+  .btn-cancel:hover {
+    border-color: var(--text2);
+    color: var(--text);
+  }
+
+  .btn-save {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: white;
+    font-weight: 600;
+    font-family: var(--font-body);
+    transition: background 0.15s;
+  }
+
+  .btn-save:hover { background: var(--accent-light); }
+
+  /* ===== AUTO-SCROLL INDICATOR ===== */
+  .scroll-indicator {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    color: white;
+    box-shadow: 0 4px 16px rgba(194,65,12,0.4);
+    cursor: pointer;
+    z-index: 50;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s;
+    pointer-events: none;
+    border: none;
+  }
+
+  .scroll-indicator.visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+  }
+
+  .sync-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-body);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .sync-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .sync-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .sync-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 99px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .sync-status.ok    { background: #D1FAE5; color: #065F46; }
+  .sync-status.busy  { background: #FEF3C7; color: #92400E; }
+  .sync-status.dirty { background: #FFE4D6; color: #9A3412; }
+  .sync-status.error { background: #FEE2E2; color: #991B1B; }
+
+  @media (prefers-color-scheme: dark) {
+    .sync-status.ok    { background: #064E3B; color: #6EE7B7; }
+    .sync-status.busy  { background: #451A03; color: #FCD34D; }
+    .sync-status.dirty { background: #431407; color: #FDBA74; }
+    .sync-status.error { background: #450A0A; color: #FCA5A5; }
+  }
+
+  /* Ocultar botones sync y status en móvil pequeño para no saturar el header */
+  @media (max-width: 480px) {
+    .sync-btn { font-size: 0.72rem; padding: 0.25rem 0.45rem; }
+    .sync-status { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
+  }
+
+  /* ===== RESPONSIVE: TOOLBAR EN MÓVIL ===== */
+  @media (max-width: 599px) {
+    .song-toolbar {
+      padding: 0.4rem 0.6rem;
+      gap: 0.3rem;
+    }
+    .toolbar-label { display: none; }
+    .tbtn { padding: 0.35rem 0.45rem; min-width: 26px; font-size: 0.78rem; }
+    .toolbar-group { padding: 0.15rem 0.3rem; gap: 0.2rem; }
+    .transpose-display, .scroll-speed-display { min-width: 24px; font-size: 0.72rem; }
+    .itab { padding: 0.6rem 0.75rem; font-size: 0.78rem; }
+    .itab-icon { font-size: 0.9rem; }
+    .song-view { padding: 1rem 0.85rem 5rem; }
+    .annotation-view { padding: 1rem 0.85rem 5rem; }
+    .song-main-title { font-size: 1.3rem; }
+  }
+
+  /* ===== RESPONSIVE: TABLET ===== */
+  @media (min-width: 600px) and (max-width: 1023px) {
+    .song-view { padding: 1.25rem 1.1rem 5rem; }
+  }
+
+  /* ===== RESPONSIVE: ESCRITORIO AMPLIO ===== */
+  @media (min-width: 1024px) {
+    .song-toolbar { padding: 0.6rem 1.5rem; gap: 0.6rem; }
+    .song-view { padding: 1.75rem 2rem 5rem; }
+    .annotation-view { padding: 1.75rem 2rem 5rem; }
+  }
   @media print {
-    .app-header, .detail-controls, .actions-bar, .search-box, #list-view { display: none !important; }
+    .app-header, .song-toolbar, .instrument-tabs, .scroll-indicator { display: none !important; }
+    .song-view { padding: 0; }
+    .song-content { font-size: 11pt; }
     body { background: white; color: black; }
-    .song-detail { border: none; padding: 0; }
-    .lyrics { background: white; color: black; }
-    .chord { color: #000; font-weight: bold; }
+    .song-content .chord-line { color: #8B2500; }
   }
 
+  /* ===== MISC ===== */
+  .hidden { display: none !important; }
+  
   .toast {
     position: fixed;
-    bottom: 20px;
+    bottom: 5rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(20px);
     background: var(--text);
     color: var(--bg);
-    padding: 10px 18px;
-    border-radius: var(--radius);
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 200;
+    padding: 0.65rem 1.25rem;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    z-index: 300;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
     pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-
-  .section { display: none; }
-  .section.active { display: block; }
-
-  /* === RESPONSIVE === */
-  /* Tablet portrait y móviles grandes */
-  @media (max-width: 768px) {
-    .container { padding: 0.75rem 0.75rem 50vh; }
-    h1 { font-size: 22px; }
-    .detail-titles h2 { font-size: 16px; }
-    .detail-titles p { font-size: 12px; }
-    .lyrics { font-size: 14px; padding: 0.75rem; }
-    .lyrics.size-1 { font-size: 16px; }
-    .lyrics.size-2 { font-size: 18px; }
-    .lyrics.size-3 { font-size: 22px; }
-    .lyrics.size-4 { font-size: 26px; }
-    button, .btn { font-size: 13px; padding: 7px 10px; }
-    button.icon-only { width: 34px; height: 34px; }
-    .modal { padding: 1.25rem; }
+    white-space: nowrap;
   }
 
-  /* Móviles pequeños */
-  @media (max-width: 480px) {
-    .container { padding: 0.5rem 0.5rem 50vh; }
-    h1 { font-size: 20px; }
-    .app-header { gap: 8px; margin-bottom: 1rem; padding-bottom: 0.75rem; }
-    .actions-bar { width: 100%; justify-content: flex-start; }
-    .detail-header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      padding: 0.5rem;
-      margin-left: -0.5rem;
-      margin-right: -0.5rem;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-    .detail-titles { text-align: left; }
-    .detail-controls { width: 100%; justify-content: space-between; }
-    .song-detail { padding: 0.75rem; }
-    .lyrics { font-size: 13px; padding: 0.5rem; }
-    .song-item { padding: 12px 14px; }
-    .song-title-text { font-size: 15px; }
-    .modal { padding: 1rem; border-radius: var(--radius); }
-    .modal h3 { font-size: 17px; }
-    .modal-overlay { padding: 1rem 0.5rem; }
-  }
-
-  /* Móvil en horizontal (landscape) — pantalla muy baja */
-  @media (max-height: 500px) and (orientation: landscape) {
-    .container { padding: 0.25rem 0.5rem 50vh; }
-    .app-header { padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
-    .detail-header {
-      flex-direction: row;
-      padding: 0.4rem 0.6rem;
-      margin-bottom: 0.5rem;
-    }
-    h1 { font-size: 18px; }
-    .detail-titles h2 { font-size: 15px; }
-    .detail-titles p { display: none; } /* ocultar artista en landscape compacto */
-    .lyrics { padding: 0.5rem 0.75rem; }
-    button, .btn { padding: 5px 8px; font-size: 12px; }
-    button.icon-only { width: 30px; height: 30px; }
-    .autoscroll-box button { width: 26px; height: 26px; }
-    .transpose-box button { width: 26px; height: 26px; }
-  }
-
-  /* Pantalla ancha — más espacio */
-  @media (min-width: 1100px) {
-    .container { max-width: 1000px; }
-    .lyrics { font-size: 16px; }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 </style>
+<!-- Firebase SDKs (compat v8) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<div class="container">
-
-  <!-- VISTA LISTA -->
-  <div id="list-view" class="section active">
-    <header class="app-header">
-      <h1><span class="icon">🎸</span> Mi cancionero</h1>
-      <div class="actions-bar">
-        <button class="primary" id="btn-new">+ Nueva canción</button>
-        <button class="icon-only" id="btn-export" title="Exportar cancionero (JSON)">⬇</button>
-        <button class="icon-only" id="btn-import" title="Importar cancionero">⬆</button>
-        <input type="file" id="file-import" accept=".json" style="display:none">
-      </div>
-    </header>
-
-    <input type="text" id="search" class="search-box" placeholder="🔍 Buscar por título o artista...">
-
-    <div id="songs" class="song-list"></div>
-    <div id="empty" class="empty-state" style="display:none">
-      <div style="font-size: 48px; margin-bottom: 8px;">🎵</div>
-      <p style="margin: 0 0 8px;">No hay canciones todavía</p>
-      <button class="primary" onclick="document.getElementById('btn-new').click()">Añadir la primera</button>
+<!-- ===== PANTALLA DE SELECCIÓN DE PERFIL ===== -->
+<div id="profile-screen">
+  <div class="profile-header">
+    <h1>Es cuestión de organizarse</h1>
+    <p>¿Quién eres hoy?</p>
+  </div>
+  <div class="profile-grid">
+    <div class="profile-card" data-profile="guitarra1">
+      <div class="profile-icon">🎸</div>
+      <div class="profile-instrument">Guitarra 1</div>
+      <div class="profile-name">Hilario</div>
+    </div>
+    <div class="profile-card" data-profile="guitarra2">
+      <div class="profile-icon">🎸</div>
+      <div class="profile-instrument">Guitarra 2</div>
+      <div class="profile-name">Omar</div>
+    </div>
+    <div class="profile-card" data-profile="bajo">
+      <div class="profile-icon">🎵</div>
+      <div class="profile-instrument">Bajo</div>
+      <div class="profile-name">Naky</div>
+    </div>
+    <div class="profile-card" data-profile="bateria">
+      <div class="profile-icon">🥁</div>
+      <div class="profile-instrument">Batería</div>
+      <div class="profile-name">Mai</div>
     </div>
   </div>
-
-  <!-- VISTA DETALLE -->
-  <div id="detail-view" class="section">
-    <div class="song-detail">
-      <div class="detail-header">
-        <div class="detail-titles">
-          <h2 id="d-title"></h2>
-          <p id="d-artist"></p>
-        </div>
-        <div class="detail-controls">
-          <div class="autoscroll-box" title="Auto-scroll (espacio para pausar)">
-            <button id="speed-down" aria-label="Más lento">−</button>
-            <button id="btn-play" class="play-btn" aria-label="Reproducir auto-scroll">▶</button>
-            <button id="speed-up" aria-label="Más rápido">+</button>
-            <span class="speed-val" id="speed-val">30</span>
-          </div>
-          <div class="transpose-box" title="Transportar tono">
-            <button id="t-down" aria-label="Bajar semitono">−</button>
-            <span class="transpose-val" id="t-val">0</span>
-            <button id="t-up" aria-label="Subir semitono">+</button>
-          </div>
-          <button class="notation-toggle" id="btn-notation" title="Cambiar notación">DO/RE</button>
-          <button class="icon-only" id="zoom-out" title="Texto más pequeño">−A</button>
-          <button class="icon-only" id="zoom-in" title="Texto más grande">+A</button>
-          <button class="icon-only" id="btn-print" title="Imprimir">🖨</button>
-          <button class="icon-only" id="btn-edit" title="Editar">✎</button>
-          <button id="btn-back">← Lista</button>
-        </div>
-      </div>
-      <div id="lyrics" class="lyrics"></div>
-    </div>
-  </div>
-
-  <!-- MODAL -->
-  <div id="modal" class="modal-overlay">
-    <div class="modal">
-      <h3 id="modal-title">Nueva canción</h3>
-      <label>Título</label>
-      <input type="text" id="m-title" placeholder="Ej: Disimular">
-      <label>Artista</label>
-      <input type="text" id="m-artist" placeholder="Ej: Los Piratas">
-      <label>Letra con acordes</label>
-      <textarea id="m-content" placeholder="Pega aquí la letra con los acordes encima de las sílabas..."></textarea>
-      <p class="hint">
-        Se aceptan ambas notaciones: <strong>latina</strong> (DO, RE, MI, FA, SOL, LA, SI) o <strong>anglosajona</strong> (C, D, E, F, G, A, B), con sufijos como m, 7, maj7, sus, dim, /bajo.
-      </p>
-      <div class="modal-actions">
-        <button id="m-cancel">Cancelar</button>
-        <button class="primary" id="m-save">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast"></div>
 </div>
 
-<script>
-(function() {
-  'use strict';
+<!-- ===== APP PRINCIPAL ===== -->
+<div id="app">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="back-btn hidden" id="btn-back" title="Volver">&#8592;</button>
+      <span class="header-title" id="header-title">Cancionero</span>
+    </div>
+    <div class="header-right">
+      <span class="sync-status" id="sync-status" title="Estado de sincronización"></span>
+      <button class="sync-btn" id="btn-upload" title="Subir cambios a la nube">⬆ Subir</button>
+      <button class="sync-btn" id="btn-download" title="Traer datos de la nube">⬇ Traer</button>
+      <div class="current-profile-badge" id="profile-badge" title="Cambiar perfil"></div>
+    </div>
+  </header>
 
-  const STORAGE_KEY = 'cancionero_v1';
+  <!-- Vista: Lista de canciones -->
+  <div id="song-list-view">
+    <div class="song-list-container">
+      <div class="song-list-welcome">
+        <h2 id="list-welcome-title">Canciones</h2>
+        <p>4 canciones · Toca para ver letra y acordes</p>
+      </div>
+      <div class="songs-grid" id="songs-grid"></div>
+    </div>
+  </div>
 
-  // --- Notas y conversión entre notaciones ---
-  const NOTE_INDEX = {
-    // Latina
-    'DO': 0, 'DO#': 1, 'DOb': 11,
-    'RE': 2, 'RE#': 3, 'REb': 1,
-    'MI': 4, 'MIb': 3, 'MI#': 5,
-    'FA': 5, 'FA#': 6, 'FAb': 4,
-    'SOL': 7, 'SOL#': 8, 'SOLb': 6,
-    'LA': 9, 'LA#': 10, 'LAb': 8,
-    'SI': 11, 'SIb': 10, 'SI#': 0,
-    // Anglosajona
-    'C': 0, 'C#': 1, 'Cb': 11,
-    'D': 2, 'D#': 3, 'Db': 1,
-    'E': 4, 'Eb': 3, 'E#': 5,
-    'F': 5, 'F#': 6, 'Fb': 4,
-    'G': 7, 'G#': 8, 'Gb': 6,
-    'A': 9, 'A#': 10, 'Ab': 8,
-    'B': 11, 'Bb': 10, 'B#': 0
-  };
+  <!-- Vista: Detalle de canción -->
+  <div id="song-detail-view" class="hidden">
+    <!-- Toolbar -->
+    <div class="song-toolbar">
+      <!-- Transportador -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Tono</span>
+        <button class="tbtn" id="btn-transpose-down" title="Bajar semitono">&#9660;</button>
+        <span class="transpose-display" id="transpose-display">0</span>
+        <button class="tbtn" id="btn-transpose-up" title="Subir semitono">&#9650;</button>
+        <button class="tbtn" id="btn-transpose-reset" title="Resetear" style="font-size:0.7rem">↺</button>
+      </div>
+      <!-- Notación -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Nota</span>
+        <button class="tbtn" id="btn-notation-lat" title="Notación latina">Do</button>
+        <button class="tbtn" id="btn-notation-ang" title="Notación anglosajona">C</button>
+      </div>
+      <!-- Zoom -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Zoom</span>
+        <button class="tbtn tbtn-icon" id="btn-zoom-out" title="Reducir">A&#773;</button>
+        <button class="tbtn tbtn-icon" id="btn-zoom-in" title="Ampliar">A&#0772;</button>
+      </div>
+      <!-- Scroll -->
+      <div class="toolbar-group">
+        <span class="toolbar-label">Scroll</span>
+        <button class="tbtn tbtn-icon" id="btn-scroll-slower" title="Más lento">&#9664;</button>
+        <span class="scroll-speed-display" id="scroll-speed-display">40</span>
+        <button class="tbtn tbtn-icon" id="btn-scroll-faster" title="Más rápido">&#9654;</button>
+        <button class="tbtn tbtn-icon active" id="btn-scroll-toggle" title="Play/Pausa">&#9654;</button>
+      </div>
+      <!-- Imprimir -->
+      <div class="toolbar-group">
+        <button class="tbtn tbtn-icon" id="btn-print" title="Imprimir">&#128438;</button>
+      </div>
+      <!-- YouTube -->
+      <div class="toolbar-group">
+        <button class="tbtn tbtn-icon" id="btn-youtube" title="Ver/escuchar en YouTube">▶ YT</button>
+      </div>
+    </div>
 
-  const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
-  const ENG_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    <!-- Pestañas de instrumento -->
+    <div class="instrument-tabs" id="instrument-tabs">
+      <button class="itab active" data-tab="common">
+        <span class="itab-icon">📜</span> Común
+      </button>
+      <button class="itab" data-tab="guitarra1">
+        <span class="itab-icon">🎸</span> Hilario
+      </button>
+      <button class="itab" data-tab="guitarra2">
+        <span class="itab-icon">🎸</span> Omar
+      </button>
+      <button class="itab" data-tab="bajo">
+        <span class="itab-icon">🎵</span> Naky
+      </button>
+      <button class="itab" data-tab="bateria">
+        <span class="itab-icon">🥁</span> Mai
+      </button>
+    </div>
 
-  // Regex que detecta un acorde completo
-  // Nota raíz (latina o anglosajona) + alteración opcional + sufijos
-  const CHORD_REGEX = /^(DO|RE|MI|FA|SOL|LA|SI|[A-G])(#|b)?(m|maj|min|sus|dim|aug|add)?(\d{0,2})?(sus\d?|add\d+|maj\d+|dim\d?)?(\/((DO|RE|MI|FA|SOL|LA|SI|[A-G])(#|b)?))?$/;
-
-  function parseChord(token) {
-    const clean = token.trim();
-    if (!clean) return null;
-    const m = clean.match(CHORD_REGEX);
-    if (!m) return null;
-    const root = m[1] + (m[2] || '');
-    if (NOTE_INDEX[root] === undefined) return null;
-    return { root, rest: clean.slice(root.length) };
-  }
-
-  function transposeAndConvert(token, semitones, targetNotation) {
-    // targetNotation: 'auto' | 'latin' | 'eng'
-    const parsed = parseChord(token);
-    if (!parsed) return token;
-
-    // Detectar notación original
-    const isLatin = /^(DO|RE|MI|FA|SOL|LA|SI)/.test(parsed.root);
-    const notation = targetNotation === 'auto' ? (isLatin ? 'latin' : 'eng') : targetNotation;
-    const notesArr = notation === 'latin' ? LATIN_NOTES : ENG_NOTES;
-
-    const rootIdx = NOTE_INDEX[parsed.root];
-    const newIdx = ((rootIdx + semitones) % 12 + 12) % 12;
-    let result = notesArr[newIdx];
-
-    // Procesar el resto (sufijos y bajo)
-    let rest = parsed.rest;
-    // Convertir bajo si existe
-    const slashMatch = rest.match(/^(.*)\/(.+)$/);
-    if (slashMatch) {
-      const prefix = slashMatch[1];
-      const bass = slashMatch[2];
-      const bassParsed = parseChord(bass);
-      if (bassParsed) {
-        const bassIdx = NOTE_INDEX[bassParsed.root];
-        const newBassIdx = ((bassIdx + semitones) % 12 + 12) % 12;
-        rest = prefix + '/' + notesArr[newBassIdx] + bassParsed.rest;
-      }
-    }
-    return result + rest;
-  }
-
-  // Determina si una línea es de acordes (>50% tokens son acordes)
-  function isChordLine(line) {
-    const trimmed = line.trim();
-    if (!trimmed) return false;
-    // Excluir líneas de tablatura (muchos guiones o números pegados)
-    if (/^[-|\d>]+$/.test(trimmed.replace(/\s/g, ''))) return false;
-    if ((trimmed.match(/-/g) || []).length > 5) return false;
-    // Excluir líneas que son etiquetas [Intro], [Estribillo], etc.
-    if (/^\[.*\]$/.test(trimmed)) return false;
-    // Excluir líneas con dos puntos al final (ESTRIBILLO:, Intro:, etc.)
-    if (/:\s*$/.test(trimmed)) return false;
-
-    const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
-    if (tokens.length === 0) return false;
-    const chordCount = tokens.filter(t => parseChord(t) !== null).length;
-    return chordCount / tokens.length >= 0.5 && chordCount >= 1;
-  }
-
-  function escapeHtml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function renderLyrics(text, semitones, notation) {
-    const lines = text.split('\n');
-    return lines.map(line => {
-      const trimmed = line.trim();
-      // Etiquetas en corchetes
-      if (/^\[.*\]$/.test(trimmed)) {
-        return '<span class="section-label">' + escapeHtml(line) + '</span>';
-      }
-      if (isChordLine(line)) {
-        // Procesar preservando espacios
-        const parts = line.split(/(\s+)/);
-        return parts.map(p => {
-          if (/\s/.test(p)) return p;
-          const parsed = parseChord(p);
-          if (parsed) {
-            return '<span class="chord">' + escapeHtml(transposeAndConvert(p, semitones, notation)) + '</span>';
-          }
-          return escapeHtml(p);
-        }).join('');
-      }
-      return escapeHtml(line);
-    }).join('\n');
-  }
-
-  // --- Estado ---
-  let songs = [];
-  let currentId = null;
-  let transpose = 0;
-  let zoomLevel = 0;
-  let notation = 'auto'; // 'auto', 'latin', 'eng'
-  let editingId = null;
-
-  // Canciones de ejemplo precargadas
-  const DEFAULT_SONGS = [
-    {
-      id: 's_disimular',
-      title: 'Disimular',
-      artist: 'Los Piratas',
-      content: `MIm                     RE MIm
-Entrando cerca sin rozar
-MIm                     RE MIm
-sonriendo sin hablar
-MIm                  DO
-un cosquilleo en los pies
-                     RE
-voy a empezar a pensar 
-                          MIm RE MIm
-que esto no va a akabar bien
-                     DO
-seguro que es exclusivo
-                     RE         MIm RE MIm RE
-y bastante nocivo para nuestro amor.
-
-DO        RE   SIm
-No ese no soy yo
-     RE              DO 
-no intentes cambiar
-       RE        SIm   RE MIm DO
-no quieras hacer    parecer 
-                  RE              SIm           RE
-¿que harias tu si ahora yo te convirtiera
-              DO                SIm  MIm SIm
-en algo que es peor que disimular?
-
-MIm   FA#m   SOL    LA
-Por    lo     que   se 
-de la vida que has llevado
-como y cuando has empezado
-no puedes tratarme asi
-no conozco ningun caso de alguien que me haya ganado
-es posible deternerlo a tiempo
-MIm              RE     MIm RE
-es posible detenerlo.
-
-Ahora quisiera explicar
-que yo no te menti
-tal vez quisite creer 
-que podia haber algo entre tu y yo
-tal vez quisiste pensar 
-que te iba a dar las llaves del portal.
-
-No soporto que se pueda esconder el miedo
-quizas sin querer
-¿que haria yo si entonces tu me contestaras 
-que esto no es peor que merodear?
-
-Por lo que se de la vida que has llevado
-como y cuando has empezado
-no puedes tratarme asi
-no conozco ningun caso de alguien que me haya ganado
-es posible deternerlo a tiempo
-es posible detenerlo a tiempo.`
-    },
-    {
-      id: 's_equilibrio',
-      title: 'El equilibrio es imposible',
-      artist: 'Iván Ferreiro',
-      content: `Tono: F#m
-
-A         Bm              C#m           D
- Confía en mí, nunca has soñado poder gritar
-          C#m            D
-y te enfureces. Es horrible el miedo incontenible.
-
-A         Bm            C#m           D
- Entonces ven, dame un pedazo, no te conozco
-          C#m            D
-cuando dices qué felices, qué caras más tristes
-D
- qué caras más tristes
-
-A         Bm     C#m     D     C#m
-Ella sabe y presiente que algo ha cambiado.
- D
-¿Dónde estás? No te veo. Es mejor, ya lo entiendo.
-  A    Bm      C#m   D   C#m
-Ahora ya no me lamento, no sigo detrás
-
-  D
-¿Para qué? Si cada vez que vienes
-                 D                       A
-me convences, me abrazas y me hablas de los dos
-
-ESTRIBILLO:
-        Bm           C#m              D
-   Y yo siento que no voy, que el equilibrio es imposible
-          Dm                A
-cuando vienes y me hablas de nosotros dos
-     Bm        C#m       D
-No te diré que no, yo te sigo porque creo que
-       D
-en el fondo hay algo
-
-INTRO: A Bm C#m D
-
-A         Bm      C#m       D    C#m
-Ella no me imagina cazando en los bares,
-       D            C#m   D
-viviendo deprisa ¿Para qué?
-  D
-¿Para qué? Si cada vez que vienes
-                 D                       A
-me convences, me abrazas y me hablas de los dos
-
-ESTRIBILLO:
-        Bm           C#m              D
-   Y yo siento que no voy, que el equilibrio es imposible
-          Dm                A
-cuando vienes y me hablas de nosotros dos
-     Bm        C#m       D
-No te diré que no, yo te sigo porque creo que
-       D                 C#m
-en el fondo hay algo
-       D                                          D
-yo te sigo porque creo que en el fondo hay algo
-
-A         Bm              C#m           D
- Confía en mí, nunca has soñado poder gritar
-          C#m            D
-y te enfureces. Es horrible el miedo incontenible.
-
-A         Bm            C#m           D
- Entonces ven, dame un abrazo, no te conozco
-          C#m            D
-cuando dices qué felices, qué caras más tristes
-D
- qué caras más tristes qué caras más tristes`
-    },
-    {
-      id: 's_vereda',
-      title: 'La Vereda De La Puerta De Atrás',
-      artist: 'Extremoduro',
-      content: `[Intro: punteo]
-------------------------------------------------------
-------------------------------------------------------
--------------------------------------0-2-2-0-0---0-2--
------------------------------0---0-2-----------2------
--0-2-3-3-2-2-0-2-------0-2-3---3----------------------
------------------3-0-3--------------------------------
-
---------------------------1>0-5--
--0-1>0---0-----------------------
--------2---0---------------------
--------------2-1-0---0-----------
--------------------3---2---------
----------------------------------
-
-[A partir de aquí, acordes rasgueando solo las 3 primeras cuerdas
-y la 4ª a modo de bajo]
-
-     LAm
-Si no fuera
-      SOL        FA
-porque hice colocado
-   SOL          LAm
-el camino de tu espera
-     SOL              FA
-me habría desconectado
-SOL  LAm     SOL        FA
-condenado a mirarte desde fuera
-     SOL          LAm  SOL FA SOL
-y dejar que te tocara el sol.
-
-     LAm
-Y si fuera
-   SOL         FA
-mi vida una escalera
-   SOL         LAm
-me la he pasado entera
-   SOL                FA
-buscando el siguiente escalón
-SOL  LAm        SOL       FA
-convencido que estás en el tejado 
-     SOL          LAm  SOL FA SOL
-esperando a ver si llego yo.
-
-DO                       LAm                          MIm
-Y dejar de lado la vereda de la puerta de atrás
-         FA
-por donde te vi pasar
-   DO                            LAm                           MIm
-como una regadera que la hierba hace que vuelva a brotar
-          FA
-y ahora todo es campo ya.
-
-     LAm
-Sus soldados
-    SOL          FA
-son flores de madera
-       SOL         LAm
-y mi ejercito no tiene
-    SOL              FA
-bandera es sólo un corazón
-SOL  LAm        SOL       FA
-condenado a vivir entre malezas
-     SOL          LAm  SOL FA SOL
-sembrando flores de algodón.
-
-     LAm
-Si me espera
-   SOL              FA
-la muerte traicionera
-   SOL                LAm 
-y antes de repartirme
-   SOL          FA
-del todo me veo en un cajón
-SOL  LAm        SOL       FA
-que me entierren con la picha por fuera
-     SOL          LAm  SOL FA SOL
-pa' que se la coma un ratón.
-
-   DO                           LAm                          MIm
-Y muere a todas horas gente dentro de mi televisor
-         FA 
-quiero oir alguna canción
-   DO                            LAm                            MIm 
-que no hable de sandeces y que diga que NO sobra el amor
-         FA
-y que empiece en SI y no en no.
-
-DO                       LAm                          MIm
-Y dejar de lado la vereda de la puerta de atrás
-         FA
-por donde te vi marchar
-   DO                            LAm                           MIm
-como una regadera que la hierba hace que vuelva a brotar
-          FA
-y ahora todo es campo ya.
-
-[Punteo y luego canta Fito]
-
-FA          SOL          LAm
-Dices que a veces no comprendes que dice mi voz
-        SOL 
-como quieres que esté dentro de tu ombligo
-FA          SOL          LAm
-si entre los dedos se me escapa volando una flor
-        SOL
-y ella solita va marcando el camino.
-
-FA          SOL          LAm
-Dices que a veces no comprendes que dice mi voz
-        SOL
-como quieres que yo sepa lo que digo
-FA          SOL          LAm
-si entre los dedos se me escapa volando una flor
-        SOL
-y yo la dejo que me marque el camino.`
-    },
-    {
-      id: 's_caidalibre',
-      title: 'Caída Libre',
-      artist: 'Leiva',
-      content: `[Intro]
-FA SOLm DO DOsus4 DO
-FA SOLm DO DOsus4 DO
-
-FA                  SOLm
-Si encontrara silencio en mi ruido mental
-      DO     DOsus4   DO
-Dormiría diez días y un año
-   FA                SOLm
-Si avistara la causa de mi tempestad
-            DO  DOsus4      DO
-Me pondría a chillar como un gallo.
-
-REm         SIb                  FA
-Hoy, hasta las moscas me pasan de largo
-    DO                 REm
-¿Será que algo les huele mal?
-       SIb              FA   DO         REm
-El griterío de mis pensamientos a toda velocidad
-            SIb                  FA
-Hasta los huevos de esperar un milagro
-    DO                       SOLm
-Cansado de avanzar marcha atrás.
-
-     SIb
-Me tomo la pastilla roja
-DO/SIb
-Bebo 0.0, me alimento bien
-     LAm                       REm
-Hay un millón de muebles que mover
-         SIb                DO
-Y no sé detrás de cuál está lo que he perdido.
-
-FA          DO/MI       REm    DO
-Todo tiene luz de probador
-              SIb    DO          REm
-Ya no me reconozco y me importa bien poco
-FA          DO/MI       REm   DO
-En cuanto me dé un rayo de Sol
-                  SIb     DO         FA
-Voy a hacerme una foto en un fotomatón.
-
-SOLm DOsus4 DO
-FA SOLm DOsus4 DO
-SOLm FA SOLm FA
-
-          SOLm
-¿Quién es que llama a mi cabeza a todas horas?
-                              FA
-¿Qué puede remendar todas las hojas que han caído al suelo
-Como un árbol en invierno?
- SOLm
-Y sé que solo estoy mirando de otra forma
-                                  LAm
-Que voy a dar la vuelta a nuestra sombra mientras busco el modo
-   SIb
-De remontar el vuelo.
-
-   SIb
-A veces, hago maniobras
-DO/SIb
-Para retomarlo donde lo dejé
-     LAm                  REm
-Hay demasiados frentes a la vez
-        SIb                DO
-Y no consigo ver quién coño es el enemigo.
-
-FA          DO/MI       REm    DO
-Todo tiene luz de probador
-              SIb    DO          REm
-Ya no me reconozco y me importa bien poco
-FA          DO/MI       REm   DO
-En cuanto me dé un rayo de Sol
-                  SIb     DO
-Voy a hacerme una foto…
-
-FA          DO/MI       REm    DO
-Todo tiene luz de probador
-              SIb    DO          REm
-Ya no me reconozco y me importa bien poco
-FA          DO/MI       REm   DO
-En cuanto me dé un rayo de Sol
-                  SIb     DO         FA
-Voy a hacerme una foto en un fotomatón.`
-    }
-  ];
-
-  // --- Persistencia ---
-  function loadSongs() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        songs = JSON.parse(raw);
-        // Añadir canciones precargadas que aún no estén guardadas (por id)
-        let added = false;
-        for (const def of DEFAULT_SONGS) {
-          if (!songs.find(s => s.id === def.id)) {
-            songs.push(def);
-            added = true;
-          }
-        }
-        if (added) persist();
-      } else {
-        songs = DEFAULT_SONGS.slice();
-        persist();
-      }
-    } catch(e) {
-      songs = DEFAULT_SONGS.slice();
-    }
-  }
-
-  function persist() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(songs));
-    } catch(e) {
-      toast('Error al guardar', true);
-    }
-  }
-
-  // --- UI ---
-  function toast(msg, isError) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    if (isError) t.style.background = '#991B1B';
-    else t.style.background = '';
-    setTimeout(() => t.classList.remove('show'), 2200);
-  }
-
-  function renderList() {
-    const q = document.getElementById('search').value.toLowerCase().trim();
-    const filtered = songs
-      .filter(s => !q || s.title.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q))
-      .sort((a, b) => a.title.localeCompare(b.title, 'es'));
-
-    const container = document.getElementById('songs');
-    const empty = document.getElementById('empty');
-
-    if (filtered.length === 0) {
-      container.innerHTML = '';
-      empty.style.display = 'block';
-      if (q) empty.innerHTML = '<p>No hay resultados para "<strong>' + escapeHtml(q) + '</strong>"</p>';
-      return;
-    }
-    empty.style.display = 'none';
-
-    container.innerHTML = filtered.map(s => `
-      <div class="song-item" data-id="${s.id}">
-        <div class="song-info">
-          <div class="song-title-text">${escapeHtml(s.title)}</div>
-          <div class="song-artist-text">${escapeHtml(s.artist || 'Sin artista')}</div>
-        </div>
-        <div class="song-actions">
-          <button class="icon-only danger" data-action="delete" data-id="${s.id}" title="Eliminar">🗑</button>
+    <!-- Área de scroll del contenido -->
+    <div id="song-scroll-area">
+      <div class="tab-content-wrapper" id="tab-content-wrapper">
+      <!-- Pestaña Común -->
+      <div class="tab-pane active" id="pane-common">
+        <div class="song-view zoom-3" id="song-view">
+          <div class="song-meta-header">
+            <div class="song-main-title" id="detail-title"></div>
+            <div class="song-main-artist" id="detail-artist"></div>
+            <div class="song-edit-info" id="detail-edit-info"></div>
+          </div>
+          <div class="song-content" id="song-content"></div>
         </div>
       </div>
-    `).join('');
 
-    container.querySelectorAll('.song-item').forEach(el => {
-      el.addEventListener('click', (e) => {
-        if (e.target.closest('[data-action]')) return;
-        openSong(el.dataset.id);
-      });
-    });
-    container.querySelectorAll('[data-action="delete"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = btn.dataset.id;
-        const s = songs.find(x => x.id === id);
-        if (confirm('¿Eliminar "' + s.title + '"?')) {
-          songs = songs.filter(x => x.id !== id);
-          persist();
-          renderList();
-          toast('Canción eliminada');
-        }
-      });
-    });
-  }
+      <!-- Pestañas instrumentales (guitarra1, guitarra2, bajo, bateria) -->
+      <div class="tab-pane" id="pane-guitarra1">
+        <div class="annotation-view" id="av-guitarra1"></div>
+      </div>
+      <div class="tab-pane" id="pane-guitarra2">
+        <div class="annotation-view" id="av-guitarra2"></div>
+      </div>
+      <div class="tab-pane" id="pane-bajo">
+        <div class="annotation-view" id="av-bajo"></div>
+      </div>
+      <div class="tab-pane" id="pane-bateria">
+        <div class="annotation-view" id="av-bateria"></div>
+      </div>
+    </div>
+    </div><!-- /song-scroll-area -->
+  </div>
+</div>
 
-  function openSong(id) {
-    const song = songs.find(s => s.id === id);
-    if (!song) return;
-    stopPlay(); // por si venía reproduciendo
-    currentId = id;
-    transpose = 0;
-    document.getElementById('d-title').textContent = song.title;
-    document.getElementById('d-artist').textContent = song.artist || '';
-    document.getElementById('t-val').textContent = '0';
-    updateLyrics();
-    document.getElementById('list-view').classList.remove('active');
-    document.getElementById('detail-view').classList.add('active');
-    window.scrollTo(0, 0);
-  }
+<!-- ===== MODAL DE EDICIÓN ===== -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Editar</span>
+      <button class="modal-close" id="modal-close-btn">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-song-fields" class="hidden">
+        <div style="margin-bottom:0.75rem">
+          <label class="field-label">Título</label>
+          <input type="text" class="field-input" id="modal-song-title" placeholder="Título de la canción">
+        </div>
+        <div style="margin-bottom:0.75rem">
+          <label class="field-label">Artista</label>
+          <input type="text" class="field-input" id="modal-song-artist" placeholder="Artista o banda">
+        </div>
+      </div>
+      <div>
+        <label class="field-label" id="modal-content-label">Contenido (letra y acordes)</label>
+        <textarea class="field-input field-textarea" id="modal-content" placeholder="Escribe aquí letra y acordes en formato monoespaciado..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel-btn">Cancelar</button>
+      <button class="btn-save" id="modal-save-btn">Guardar</button>
+    </div>
+  </div>
+</div>
 
-  function updateLyrics() {
-    const song = songs.find(s => s.id === currentId);
-    if (!song) return;
-    const el = document.getElementById('lyrics');
-    el.innerHTML = renderLyrics(song.content, transpose, notation);
-    el.className = 'lyrics size-' + zoomLevel;
-  }
+<!-- Auto-scroll FAB -->
+<button class="scroll-indicator" id="scroll-fab" title="Pausar/Reanudar scroll">⏸</button>
 
-  function updateNotationBtn() {
-    const labels = { auto: 'Auto', latin: 'DO/RE', eng: 'C/D' };
-    document.getElementById('btn-notation').textContent = labels[notation];
-  }
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-  function cycleNotation() {
-    const order = ['auto', 'latin', 'eng'];
-    notation = order[(order.indexOf(notation) + 1) % order.length];
-    updateNotationBtn();
-    updateLyrics();
-  }
+<script>
+// ============================================================
+// === PEGAR AQUÍ firebaseConfig ===
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAvGwDEANYAnUOSEfY3xQVJEDyy2xvWVig",
+  authDomain: "es-cuestion-de-organizarse.firebaseapp.com",
+  projectId: "es-cuestion-de-organizarse",
+  storageBucket: "es-cuestion-de-organizarse.firebasestorage.app",
+  messagingSenderId: "397748807873",
+  appId: "1:397748807873:web:7d8ce4c5570ab89b588c40"
+};
 
-  function openModal(id) {
-    editingId = id;
-    document.getElementById('modal-title').textContent = id ? 'Editar canción' : 'Nueva canción';
-    if (id) {
-      const s = songs.find(x => x.id === id);
-      document.getElementById('m-title').value = s.title;
-      document.getElementById('m-artist').value = s.artist || '';
-      document.getElementById('m-content').value = s.content;
-    } else {
-      document.getElementById('m-title').value = '';
-      document.getElementById('m-artist').value = '';
-      document.getElementById('m-content').value = '';
-    }
-    document.getElementById('modal').classList.add('show');
-    setTimeout(() => document.getElementById('m-title').focus(), 50);
-  }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  function closeModal() {
-    document.getElementById('modal').classList.remove('show');
-  }
+const CANCIONERO_ID = 'grupo_principal';
+const SONGS_COL = () => db.collection('cancioneros').doc(CANCIONERO_ID).collection('canciones');
 
-  function saveFromModal() {
-    const title = document.getElementById('m-title').value.trim();
-    const artist = document.getElementById('m-artist').value.trim();
-    const content = document.getElementById('m-content').value;
-    if (!title) { alert('El título es obligatorio'); return; }
-    if (!content.trim()) { alert('La letra está vacía'); return; }
+// ============================================================
+// SINCRONIZACIÓN FIREBASE
+// ============================================================
 
-    if (editingId) {
-      const idx = songs.findIndex(s => s.id === editingId);
-      songs[idx] = { ...songs[idx], title, artist, content };
-      if (currentId === editingId) {
-        document.getElementById('d-title').textContent = title;
-        document.getElementById('d-artist').textContent = artist;
-        updateLyrics();
-      }
-      toast('Canción actualizada');
-    } else {
-      const newSong = {
-        id: 's_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-        title, artist, content
+const syncStatusEl  = document.getElementById('sync-status');
+const btnUpload     = document.getElementById('btn-upload');
+const btnDownload   = document.getElementById('btn-download');
+
+function setSyncStatus(state) {
+  // state: 'ok' | 'busy' | 'dirty' | 'error'
+  const labels = {
+    ok:    '✓ Sincronizado',
+    busy:  '⏳ Sincronizando…',
+    dirty: '⚠ Cambios sin subir',
+    error: '✗ Error de red'
+  };
+  syncStatusEl.textContent = labels[state] || '';
+  syncStatusEl.className = `sync-status ${state}`;
+  // Guardar en localStorage para restaurar al recargar
+  localStorage.setItem('cancionero_sync_status', state);
+}
+
+function initSyncStatus() {
+  const saved = localStorage.getItem('cancionero_sync_status');
+  // Si hay datos locales y no se ha subido nunca, marcar como dirty
+  setSyncStatus(saved === 'ok' ? 'ok' : 'dirty');
+}
+
+// ---- SUBIR A LA NUBE ----
+async function uploadToCloud() {
+  setSyncStatus('busy');
+  btnUpload.disabled = true;
+  btnDownload.disabled = true;
+  try {
+    const songs = JSON.parse(localStorage.getItem('cancionero_songs') || '[]');
+    const batch = db.batch();
+    for (const song of songs) {
+      const ref = SONGS_COL().doc(song.id);
+      // Separar anotaciones del resto
+      const { annotations, ...songData } = song;
+      const docData = {
+        ...songData,
+        annotations: annotations || {},
+        syncedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      songs.push(newSong);
-      toast('Canción añadida');
+      batch.set(ref, docData);
     }
-    persist();
-    closeModal();
-    renderList();
+    await batch.commit();
+    setSyncStatus('ok');
+    showToast('✓ Datos subidos a la nube');
+  } catch (err) {
+    console.error('Upload error:', err);
+    setSyncStatus('error');
+    showToast('Error al subir. Comprueba la conexión.');
+  } finally {
+    btnUpload.disabled = false;
+    btnDownload.disabled = false;
   }
+}
 
-  function exportSongs() {
-    const blob = new Blob([JSON.stringify(songs, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'cancionero_' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast('Cancionero exportado');
-  }
-
-  function importSongs(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const imported = JSON.parse(e.target.result);
-        if (!Array.isArray(imported)) throw new Error('El archivo no contiene una lista de canciones');
-        let added = 0;
-        for (const s of imported) {
-          if (s.title && s.content) {
-            const exists = songs.find(x => x.title === s.title && x.artist === s.artist);
-            if (!exists) {
-              songs.push({
-                id: 's_' + Date.now() + '_' + (added++),
-                title: s.title,
-                artist: s.artist || '',
-                content: s.content
-              });
-            }
-          }
-        }
-        persist();
-        renderList();
-        toast('Importadas ' + added + ' canciones nuevas');
-      } catch(err) {
-        toast('Error al importar: ' + err.message, true);
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  // --- Auto-scroll (prompter) ---
-  let isPlaying = false;
-  let scrollSpeed = 20; // píxeles por segundo
-  let lastTimestamp = null;
-  let animationId = null;
-  let scrollAccumulator = 0; // acumula fracciones de píxel para velocidades bajas
-
-  function loadSpeed() {
-    try {
-      const s = localStorage.getItem('cancionero_speed');
-      if (s) {
-        const n = parseInt(s, 10);
-        if (!isNaN(n) && n >= 5 && n <= 150) scrollSpeed = n;
-      }
-    } catch(e) {}
-    document.getElementById('speed-val').textContent = scrollSpeed;
-  }
-
-  function saveSpeed() {
-    try { localStorage.setItem('cancionero_speed', String(scrollSpeed)); } catch(e) {}
-  }
-
-  function startPlay() {
-    if (isPlaying) return;
-    isPlaying = true;
-    document.body.classList.add('playing');
-    const btn = document.getElementById('btn-play');
-    btn.textContent = '⏸';
-    btn.classList.add('playing');
-    btn.setAttribute('aria-label', 'Pausar auto-scroll');
-    lastTimestamp = null;
-    scrollAccumulator = 0;
-    animationId = requestAnimationFrame(scrollStep);
-  }
-
-  function stopPlay() {
-    if (!isPlaying) return;
-    isPlaying = false;
-    document.body.classList.remove('playing');
-    const btn = document.getElementById('btn-play');
-    btn.textContent = '▶';
-    btn.classList.remove('playing');
-    btn.setAttribute('aria-label', 'Reproducir auto-scroll');
-    if (animationId) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-  }
-
-  function togglePlay() {
-    if (isPlaying) stopPlay(); else startPlay();
-  }
-
-  function scrollStep(timestamp) {
-    if (!isPlaying) return;
-    if (lastTimestamp === null) lastTimestamp = timestamp;
-    let delta = (timestamp - lastTimestamp) / 1000;
-    lastTimestamp = timestamp;
-
-    // Limitar delta para evitar saltos enormes si el navegador pausa el rAF
-    if (delta > 0.1) delta = 0.1;
-
-    // Acumular el scroll teórico (puede ser fraccionario)
-    scrollAccumulator += scrollSpeed * delta;
-
-    // Solo scrollear cuando se haya acumulado al menos 1 píxel completo
-    // (esto evita que el navegador redondee a 0 o a 1 de forma errática)
-    if (scrollAccumulator >= 1) {
-      const px = Math.floor(scrollAccumulator);
-      scrollAccumulator -= px;
-      window.scrollBy(0, px);
-    }
-
-    // Detener al llegar al final
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    if (window.scrollY >= maxScroll - 2) {
-      stopPlay();
+// ---- TRAER DE LA NUBE ----
+async function downloadFromCloud() {
+  setSyncStatus('busy');
+  btnUpload.disabled = true;
+  btnDownload.disabled = true;
+  try {
+    const snapshot = await SONGS_COL().get();
+    if (snapshot.empty) {
+      showToast('La nube está vacía. Sube primero tus datos.');
+      setSyncStatus('dirty');
       return;
     }
-    animationId = requestAnimationFrame(scrollStep);
+    const cloudSongs = [];
+    snapshot.forEach(doc => cloudSongs.push({ id: doc.id, ...doc.data() }));
+
+    // Detectar conflictos: comparar updatedAt local vs nube
+    const localSongs = JSON.parse(localStorage.getItem('cancionero_songs') || '[]');
+    const conflicts = [];
+    for (const cloudSong of cloudSongs) {
+      const localSong = localSongs.find(s => s.id === cloudSong.id);
+      if (localSong && localSong.updatedAt && cloudSong.updatedAt) {
+        const localTime = new Date(localSong.updatedAt).getTime();
+        // Firestore Timestamp → milliseconds
+        const cloudTime = cloudSong.updatedAt.toMillis
+          ? cloudSong.updatedAt.toMillis()
+          : new Date(cloudSong.updatedAt).getTime();
+        if (localTime > cloudTime) {
+          conflicts.push(cloudSong.title);
+        }
+      }
+    }
+
+    if (conflicts.length > 0) {
+      const msg = `⚠ Tienes cambios locales más recientes en:\n• ${conflicts.join('\n• ')}\n\n¿Sobreescribir con los datos de la nube?`;
+      if (!confirm(msg)) {
+        setSyncStatus('dirty');
+        btnUpload.disabled = false;
+        btnDownload.disabled = false;
+        return;
+      }
+    }
+
+    // Normalizar timestamps de Firestore a ISO string
+    const normalized = cloudSongs.map(song => {
+      const s = { ...song };
+      if (s.updatedAt && s.updatedAt.toDate) s.updatedAt = s.updatedAt.toDate().toISOString();
+      if (s.syncedAt && s.syncedAt.toDate) delete s.syncedAt;
+      // Normalizar timestamps dentro de annotations
+      if (s.annotations) {
+        for (const key of Object.keys(s.annotations)) {
+          const ann = s.annotations[key];
+          if (ann && ann.updatedAt && ann.updatedAt.toDate) {
+            ann.updatedAt = ann.updatedAt.toDate().toISOString();
+          }
+        }
+      }
+      // Asegurar que youtube se preserva desde los defaults si no viene de la nube
+      if (!s.youtube) {
+        const def = DEFAULT_SONGS.find(d => d.id === s.id);
+        if (def && def.youtube) s.youtube = def.youtube;
+      }
+      return s;
+    });
+
+    localStorage.setItem('cancionero_songs', JSON.stringify(normalized));
+    state.songs = normalized;
+    renderSongList();
+    if (state.currentSongId) renderSongDetail();
+    setSyncStatus('ok');
+    showToast('✓ Datos traídos de la nube');
+  } catch (err) {
+    console.error('Download error:', err);
+    setSyncStatus('error');
+    showToast('Error al descargar. Comprueba la conexión.');
+  } finally {
+    btnUpload.disabled = false;
+    btnDownload.disabled = false;
+  }
+}
+
+// ============================================================
+// DATOS Y ESTADO
+// ============================================================
+
+const PROFILES = {
+  guitarra1: { name: 'Hilario', instrument: 'Guitarra 1', icon: '🎸' },
+  guitarra2: { name: 'Omar',    instrument: 'Guitarra 2', icon: '🎸' },
+  bajo:      { name: 'Naky',    instrument: 'Bajo',        icon: '🎵' },
+  bateria:   { name: 'Mai',     instrument: 'Batería',     icon: '🥁' }
+};
+
+const INSTRUMENT_TABS = [
+  { key: 'guitarra1', name: 'Hilario', icon: '🎸' },
+  { key: 'guitarra2', name: 'Omar',    icon: '🎸' },
+  { key: 'bajo',      name: 'Naky',    icon: '🎵' },
+  { key: 'bateria',   name: 'Mai',     icon: '🥁' }
+];
+
+const DEFAULT_SONGS = [
+  {
+    "id": "s_disimular",
+    "title": "Disimular",
+    "artist": "Los Piratas",
+    "youtube": "https://youtu.be/CKjYQ7wCutY?si=5mAS1_jQsOGiMJLN",
+    "content": "MIm                     RE MIm\nEntrando cerca sin rozar\nMIm                     RE MIm\nsonriendo sin hablar\nMIm                  DO\nun cosquilleo en los pies\n                     RE\nvoy a empezar a pensar \n                          MIm RE MIm\nque esto no va a akabar bien\n                     DO\nseguro que es exclusivo\n                     RE         MIm RE MIm RE\ny bastante nocivo para nuestro amor.\n\nDO        RE   SIm\nNo ese no soy yo\n     RE              DO \nno intentes cambiar\n       RE        SIm   RE MIm DO\nno quieras hacer    parecer \n                  RE              SIm           RE\n¿que harias tu si ahora yo te convirtiera\n              DO                SIm  MIm SIm\nen algo que es peor que disimular?\n\nMIm   FA#m   SOL    LA\nPor    lo     que   se \nde la vida que has llevado\ncomo y cuando has empezado\nno puedes tratarme asi\nno conozco ningun caso de alguien que me haya ganado\nes posible deternerlo a tiempo\nMIm              RE     MIm RE\nes posible detenerlo.\n\nAhora quisiera explicar\nque yo no te menti\ntal vez quisite creer \nque podia haber algo entre tu y yo\ntal vez quisiste pensar \nque te iba a dar las llaves del portal.\n\nNo soporto que se pueda esconder el miedo\nquizas sin querer\n¿que haria yo si entonces tu me contestaras \nque esto no es peor que merodear?\n\nPor lo que se de la vida que has llevado\ncomo y cuando has empezado\nno puedes tratarme asi\nno conozco ningun caso de alguien que me haya ganado\nes posible deternerlo a tiempo\nes posible detenerlo a tiempo."
+  },
+  {
+    "id": "s_equilibrio",
+    "title": "El equilibrio es imposible",
+    "artist": "Iván Ferreiro",
+    "youtube": "https://youtu.be/RmL0Bos6-Zg?si=9lTkxAUwkk2xQn4r",
+    "content": "Tono: F#m\n\nA         Bm              C#m           D\n Confía en mí, nunca has soñado poder gritar\n          C#m            D\ny te enfureces. Es horrible el miedo incontenible.\n\nA         Bm            C#m           D\n Entonces ven, dame un pedazo, no te conozco\n          C#m            D\ncuando dices qué felices, qué caras más tristes\nD\n qué caras más tristes\n\nA         Bm     C#m     D     C#m\nElla sabe y presiente que algo ha cambiado.\n D\n¿Dónde estás? No te veo. Es mejor, ya lo entiendo.\n  A    Bm      C#m   D   C#m\nAhora ya no me lamento, no sigo detrás\n\n  D\n¿Para qué? Si cada vez que vienes\n                 D                       A\nme convences, me abrazas y me hablas de los dos\n\nESTRIBILLO:\n        Bm           C#m              D\n   Y yo siento que no voy, que el equilibrio es imposible\n          Dm                A\ncuando vienes y me hablas de nosotros dos\n     Bm        C#m       D\nNo te diré que no, yo te sigo porque creo que\n       D\nen el fondo hay algo\n\nINTRO: A Bm C#m D\n\nA         Bm      C#m       D    C#m\nElla no me imagina cazando en los bares,\n       D            C#m   D\nviviendo deprisa ¿Para qué?\n  D\n¿Para qué? Si cada vez que vienes\n                 D                       A\nme convences, me abrazas y me hablas de los dos\n\nESTRIBILLO:\n        Bm           C#m              D\n   Y yo siento que no voy, que el equilibrio es imposible\n          Dm                A\ncuando vienes y me hablas de nosotros dos\n     Bm        C#m       D\nNo te diré que no, yo te sigo porque creo que\n       D                 C#m\nen el fondo hay algo\n       D                                          D\nyo te sigo porque creo que en el fondo hay algo\n\nA         Bm              C#m           D\n Confía en mí, nunca has soñado poder gritar\n          C#m            D\ny te enfureces. Es horrible el miedo incontenible.\n\nA         Bm            C#m           D\n Entonces ven, dame un abrazo, no te conozco\n          C#m            D\ncuando dices qué felices, qué caras más tristes\nD\n qué caras más tristes qué caras más tristes"
+  },
+  {
+    "id": "s_vereda",
+    "title": "La Vereda De La Puerta De Atrás",
+    "artist": "Extremoduro",
+    "youtube": "https://youtu.be/43S_qfT6vpo?si=J_coLHMMbe2IWj-m",
+    "content": "[Intro: punteo]\n------------------------------------------------------\n------------------------------------------------------\n-------------------------------------0-2-2-0-0---0-2--\n-----------------------------0---0-2-----------2------\n-0-2-3-3-2-2-0-2-------0-2-3---3----------------------\n-----------------3-0-3--------------------------------\n\n--------------------------1>0-5--\n-0-1>0---0-----------------------\n-------2---0---------------------\n-------------2-1-0---0-----------\n-------------------3---2---------\n---------------------------------\n\n[A partir de aquí, acordes rasgueando solo las 3 primeras cuerdas\ny la 4ª a modo de bajo]\n\n     LAm\nSi no fuera\n      SOL        FA\nporque hice colocado\n   SOL          LAm\nel camino de tu espera\n     SOL              FA\nme habría desconectado\nSOL  LAm     SOL        FA\ncondenado a mirarte desde fuera\n     SOL          LAm  SOL FA SOL\ny dejar que te tocara el sol.\n\n     LAm\nY si fuera\n   SOL         FA\nmi vida una escalera\n   SOL         LAm\nme la he pasado entera\n   SOL                FA\nbuscando el siguiente escalón\nSOL  LAm        SOL       FA\nconvencido que estás en el tejado \n     SOL          LAm  SOL FA SOL\nesperando a ver si llego yo.\n\nDO                       LAm                          MIm\nY dejar de lado la vereda de la puerta de atrás\n         FA\npor donde te vi pasar\n   DO                            LAm                           MIm\ncomo una regadera que la hierba hace que vuelva a brotar\n          FA\ny ahora todo es campo ya.\n\n     LAm\nSus soldados\n    SOL          FA\nson flores de madera\n       SOL         LAm\ny mi ejercito no tiene\n    SOL              FA\nbandera es sólo un corazón\nSOL  LAm        SOL       FA\ncondenado a vivir entre malezas\n     SOL          LAm  SOL FA SOL\nsembrando flores de algodón.\n\n     LAm\nSi me espera\n   SOL              FA\nla muerte traicionera\n   SOL                LAm \ny antes de repartirme\n   SOL          FA\ndel todo me veo en un cajón\nSOL  LAm        SOL       FA\nque me entierren con la picha por fuera\n     SOL          LAm  SOL FA SOL\npa' que se la coma un ratón.\n\n   DO                           LAm                          MIm\nY muere a todas horas gente dentro de mi televisor\n         FA \nquiero oir alguna canción\n   DO                            LAm                            MIm \nque no hable de sandeces y que diga que NO sobra el amor\n         FA\ny que empiece en SI y no en no.\n\nDO                       LAm                          MIm\nY dejar de lado la vereda de la puerta de atrás\n         FA\npor donde te vi marchar\n   DO                            LAm                           MIm\ncomo una regadera que la hierba hace que vuelva a brotar\n          FA\ny ahora todo es campo ya.\n\n[Punteo y luego canta Fito]\n\nFA          SOL          LAm\nDices que a veces no comprendes que dice mi voz\n        SOL \ncomo quieres que esté dentro de tu ombligo\nFA          SOL          LAm\nsi entre los dedos se me escapa volando una flor\n        SOL\ny ella solita va marcando el camino.\n\nFA          SOL          LAm\nDices que a veces no comprendes que dice mi voz\n        SOL\ncomo quieres que yo sepa lo que digo\nFA          SOL          LAm\nsi entre los dedos se me escapa volando una flor\n        SOL\ny yo la dejo que me marque el camino."
+  },
+  {
+    "id": "s_caidalibre",
+    "title": "Caída Libre",
+    "artist": "Leiva",
+    "youtube": "https://youtube.com/watch?v=pwKTAQ7K7HQ&si=W0V5wKJMypF4rR9m",
+    "content": "[Intro]\nFA SOLm DO DOsus4 DO\nFA SOLm DO DOsus4 DO\n\nFA                  SOLm\nSi encontrara silencio en mi ruido mental\n      DO     DOsus4   DO\nDormiría diez días y un año\n   FA                SOLm\nSi avistara la causa de mi tempestad\n            DO  DOsus4      DO\nMe pondría a chillar como un gallo.\n\nREm         SIb                  FA\nHoy, hasta las moscas me pasan de largo\n    DO                 REm\n¿Será que algo les huele mal?\n       SIb              FA   DO         REm\nEl griterío de mis pensamientos a toda velocidad\n            SIb                  FA\nHasta los huevos de esperar un milagro\n    DO                       SOLm\nCansado de avanzar marcha atrás.\n\n     SIb\nMe tomo la pastilla roja\nDO/SIb\nBebo 0.0, me alimento bien\n     LAm                       REm\nHay un millón de muebles que mover\n         SIb                DO\nY no sé detrás de cuál está lo que he perdido.\n\nFA          DO/MI       REm    DO\nTodo tiene luz de probador\n              SIb    DO          REm\nYa no me reconozco y me importa bien poco\nFA          DO/MI       REm   DO\nEn cuanto me dé un rayo de Sol\n                  SIb     DO         FA\nVoy a hacerme una foto en un fotomatón.\n\nSOLm DOsus4 DO\nFA SOLm DOsus4 DO\nSOLm FA SOLm FA\n\n          SOLm\n¿Quién es que llama a mi cabeza a todas horas?\n                              FA\n¿Qué puede remendar todas las hojas que han caído al suelo\nComo un árbol en invierno?\n SOLm\nY sé que solo estoy mirando de otra forma\n                                  LAm\nQue voy a dar la vuelta a nuestra sombra mientras busco el modo\n   SIb\nDe remontar el vuelo.\n\n   SIb\nA veces, hago maniobras\nDO/SIb\nPara retomarlo donde lo dejé\n     LAm                  REm\nHay demasiados frentes a la vez\n        SIb                DO\nY no consigo ver quién coño es el enemigo.\n\nFA          DO/MI       REm    DO\nTodo tiene luz de probador\n              SIb    DO          REm\nYa no me reconozco y me importa bien poco\nFA          DO/MI       REm   DO\nEn cuanto me dé un rayo de Sol\n                  SIb     DO\nVoy a hacerme una foto…\n\nFA          DO/MI       REm    DO\nTodo tiene luz de probador\n              SIb    DO          REm\nYa no me reconozco y me importa bien poco\nFA          DO/MI       REm   DO\nEn cuanto me dé un rayo de Sol\n                  SIb     DO         FA\nVoy a hacerme una foto en un fotomatón."
+  }
+];
+
+// ============================================================
+// ACORDES: ESCALAS
+// ============================================================
+
+const SCALE_LAT = ['DO','DO#','RE','RE#','MI','FA','FA#','SOL','SOL#','LA','LA#','SI'];
+const SCALE_ANG = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// Alias: Db=C#, Eb=D#, etc. (para anglosajona)
+const ANG_ALIASES = { 'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#' };
+// Alias latina: REb=DO#, MIb=RE#, etc.
+const LAT_ALIASES = { 'DOb':'SI','DOsus2':'DOsus2','DOsus4':'DOsus4','REb':'DO#','MIb':'RE#','FAb':'MI','SOLb':'FA#','LAb':'SOL#','SIb':'LA#','SIsus2':'SIsus2','SIsus4':'SIsus4' };
+
+// Acordes que NO deben transponerse (etiquetas de estructura, texto)
+const SECTION_LABELS = /^\[.*\]$|^(ESTRIBILLO|INTRO|VERSO|PUENTE|CODA|SOLO|PRE-?ESTRIBILLO|PUENTEAR|Tono:).*$/i;
+
+function normalizeLat(chord) {
+  // Devuelve el índice en SCALE_LAT, o -1 si no es acorde reconocible
+  // Soporta sufijos: m, #, b, maj, min, sus2, sus4, add, dim, aug, 7, 9, 11, 13, /bajo
+  const match = chord.match(/^(DO#?b?|RE#?b?|MIb?|FA#?b?|SOL#?b?|LAb?#?|SIb?)(.*)/);
+  if (!match) return { root: -1, suffix: '' };
+  let root = match[1];
+  const suffix = match[2];
+  // Normalizar alias
+  if (LAT_ALIASES[root] !== undefined && LAT_ALIASES[root] !== root) {
+    const a = LAT_ALIASES[root];
+    if (SCALE_LAT.includes(a)) root = a;
+  }
+  const idx = SCALE_LAT.indexOf(root);
+  return { root: idx, suffix };
+}
+
+function normalizeAng(chord) {
+  const match = chord.match(/^([A-G][#b]?)(.*)/);
+  if (!match) return { root: -1, suffix: '' };
+  let root = match[1];
+  const suffix = match[2];
+  if (ANG_ALIASES[root]) root = ANG_ALIASES[root];
+  const idx = SCALE_ANG.indexOf(root);
+  return { root: idx, suffix };
+}
+
+function transposeChord(chord, semitones, notation) {
+  // notation: 'lat' | 'ang'
+  if (semitones === 0 && notation === 'lat') return chord; // sin cambio
+  
+  // Detectar si tiene bajo (e.g. DO/SOL)
+  const slashMatch = chord.match(/^(.+)\/(.+)$/);
+  if (slashMatch) {
+    const t1 = transposeChord(slashMatch[1], semitones, notation);
+    const t2 = transposeChord(slashMatch[2], semitones, notation);
+    return `${t1}/${t2}`;
   }
 
-  function changeSpeed(delta) {
-    scrollSpeed = Math.max(5, Math.min(150, scrollSpeed + delta));
-    document.getElementById('speed-val').textContent = scrollSpeed;
-    saveSpeed();
+  // Intentar como latino primero
+  const lat = normalizeLat(chord);
+  if (lat.root !== -1) {
+    const newIdx = ((lat.root + semitones) % 12 + 12) % 12;
+    const scale = notation === 'ang' ? SCALE_ANG : SCALE_LAT;
+    return scale[newIdx] + lat.suffix;
   }
 
+  // Intentar como anglosajón
+  const ang = normalizeAng(chord);
+  if (ang.root !== -1) {
+    const newIdx = ((ang.root + semitones) % 12 + 12) % 12;
+    const scale = notation === 'ang' ? SCALE_ANG : SCALE_LAT;
+    return scale[newIdx] + ang.suffix;
+  }
 
-  document.getElementById('search').addEventListener('input', renderList);
-  document.getElementById('btn-new').addEventListener('click', () => openModal(null));
-  document.getElementById('btn-export').addEventListener('click', exportSongs);
-  document.getElementById('btn-import').addEventListener('click', () => document.getElementById('file-import').click());
-  document.getElementById('file-import').addEventListener('change', (e) => {
-    if (e.target.files[0]) {
-      importSongs(e.target.files[0]);
-      e.target.value = '';
+  return chord; // No reconocido, devolver tal cual
+}
+
+// ============================================================
+// DETECCIÓN DE LÍNEAS DE ACORDES
+// ============================================================
+
+function isTabLine(line) {
+  // Línea de tablatura: contiene muchos guiones
+  return (line.match(/-/g) || []).length > 4;
+}
+
+function isChordToken(token) {
+  if (!token || token.length === 0) return false;
+  if (/^\d+$/.test(token)) return false;
+  // Intentar reconocer como acorde latino o anglosajón
+  const cleanToken = token.replace(/[()]/g, '');
+  const lat = normalizeLat(cleanToken);
+  if (lat.root !== -1) return true;
+  const ang = normalizeAng(cleanToken);
+  if (ang.root !== -1) return true;
+  return false;
+}
+
+function isChordLine(line) {
+  if (SECTION_LABELS.test(line.trim())) return false;
+  if (isTabLine(line)) return false;
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
+  if (tokens.length === 0) return false;
+  const chordCount = tokens.filter(isChordToken).length;
+  return chordCount / tokens.length > 0.5;
+}
+
+// ============================================================
+// PROCESADO DE CONTENIDO CON TRANSPOSICIÓN Y NOTACIÓN
+// ============================================================
+
+function processContent(rawContent, semitones, notation) {
+  const lines = rawContent.split('\n');
+  return lines.map(line => {
+    const trimmed = line.trim();
+    
+    // Línea vacía
+    if (!trimmed) return { type: 'empty', text: '' };
+    
+    // Etiqueta de sección
+    if (SECTION_LABELS.test(trimmed)) return { type: 'section', text: line };
+    
+    // Tablatura
+    if (isTabLine(line)) return { type: 'tab', text: line };
+    
+    // Línea de acordes
+    if (isChordLine(line)) {
+      if (semitones === 0 && notation === 'lat') {
+        return { type: 'chord', text: line };
+      }
+      // Transponer token a token preservando espacios
+      const transposed = line.replace(/[A-Z][A-Za-z#b0-9]*(?:\/[A-Z][A-Za-z#b0-9]*)?/g, (match) => {
+        // Skip tokens que parezcan palabras normales muy largas
+        if (match.length > 8 && !/[#b]/.test(match)) return match;
+        return transposeChord(match, semitones, notation);
+      });
+      return { type: 'chord', text: transposed };
+    }
+    
+    // Línea de letra
+    return { type: 'lyric', text: line };
+  });
+}
+
+function renderContent(processed) {
+  return processed.map(({ type, text }) => {
+    if (type === 'empty') return '\n';
+    if (type === 'section') {
+      const escaped = escapeHtml(text);
+      return `<span class="section-label">${escaped}</span>\n`;
+    }
+    if (type === 'chord') {
+      const escaped = escapeHtml(text);
+      return `<span class="chord-line">${escaped}</span>\n`;
+    }
+    return escapeHtml(text) + '\n';
+  }).join('');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// ALMACENAMIENTO LOCAL
+// ============================================================
+
+const LS_KEY_SONGS = 'cancionero_songs';
+const LS_KEY_PROFILE = 'cancionero_profile';
+
+function loadSongs() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_SONGS);
+    if (raw) {
+      const songs = JSON.parse(raw);
+      // Parchar URLs de YouTube si la canción almacenada no las tiene aún
+      let patched = false;
+      songs.forEach(song => {
+        const def = DEFAULT_SONGS.find(d => d.id === song.id);
+        if (def && def.youtube && !song.youtube) {
+          song.youtube = def.youtube;
+          patched = true;
+        }
+      });
+      if (patched) saveSongs(songs);
+      return songs;
+    }
+  } catch(e) {}
+  // Inicializar con canciones por defecto
+  const songs = DEFAULT_SONGS.map(s => ({
+    ...s,
+    updatedBy: null,
+    updatedAt: null,
+    annotations: {
+      guitarra1: { content: '', updatedAt: null },
+      guitarra2: { content: '', updatedAt: null },
+      bajo:      { content: '', updatedAt: null },
+      bateria:   { content: '', updatedAt: null }
+    }
+  }));
+  saveSongs(songs);
+  return songs;
+}
+
+function saveSongs(songs) {
+  localStorage.setItem('cancionero_songs', JSON.stringify(songs));
+  setSyncStatus('dirty');
+}
+
+function loadProfile() {
+  return localStorage.getItem(LS_KEY_PROFILE) || null;
+}
+
+function saveProfile(profileKey) {
+  localStorage.setItem(LS_KEY_PROFILE, profileKey);
+}
+
+function timeAgo(isoString) {
+  if (!isoString) return null;
+  const diff = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'ahora mismo';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days}d`;
+}
+
+// ============================================================
+// ESTADO DE LA APLICACIÓN
+// ============================================================
+
+let state = {
+  profile: null,
+  songs: [],
+  currentSongId: null,
+  currentTab: 'common',
+  semitones: 0,
+  notation: 'lat', // 'lat' | 'ang'
+  zoom: 3,          // 1-5
+  scrollActive: false,
+  scrollSpeed: 40,  // px/s
+  // Modal
+  modalMode: null, // 'common' | 'annotation'
+  modalAnnotationKey: null
+};
+
+let scrollAccum = 0;
+let lastScrollTime = null;
+let scrollRAF = null;
+
+// ============================================================
+// REFERENCIAS DOM
+// ============================================================
+
+const profileScreen   = document.getElementById('profile-screen');
+const appEl           = document.getElementById('app');
+const btnBack         = document.getElementById('btn-back');
+const headerTitle     = document.getElementById('header-title');
+const profileBadge    = document.getElementById('profile-badge');
+const songListView    = document.getElementById('song-list-view');
+const songDetailView  = document.getElementById('song-detail-view');
+const songsGrid       = document.getElementById('songs-grid');
+const listWelcomeTitle= document.getElementById('list-welcome-title');
+
+const detailTitle     = document.getElementById('detail-title');
+const detailArtist    = document.getElementById('detail-artist');
+const detailEditInfo  = document.getElementById('detail-edit-info');
+const songContent     = document.getElementById('song-content');
+const songView        = document.getElementById('song-view');
+
+const transposeDisplay= document.getElementById('transpose-display');
+const scrollSpeedDisp = document.getElementById('scroll-speed-display');
+const scrollFab       = document.getElementById('scroll-fab');
+const btnScrollToggle = document.getElementById('btn-scroll-toggle');
+
+const editModal       = document.getElementById('edit-modal');
+const modalTitle      = document.getElementById('modal-title');
+const modalClose      = document.getElementById('modal-close-btn');
+const modalCancel     = document.getElementById('modal-cancel-btn');
+const modalSave       = document.getElementById('modal-save-btn');
+const modalSongFields = document.getElementById('modal-song-fields');
+const modalSongTitle  = document.getElementById('modal-song-title');
+const modalSongArtist = document.getElementById('modal-song-artist');
+const modalContent    = document.getElementById('modal-content');
+const modalContentLabel=document.getElementById('modal-content-label');
+
+const toastEl         = document.getElementById('toast');
+
+// ============================================================
+// INIT
+// ============================================================
+
+function init() {
+  state.songs = loadSongs();
+  const savedProfile = loadProfile();
+  initSyncStatus();
+  if (savedProfile && PROFILES[savedProfile]) {
+    selectProfile(savedProfile);
+  } else {
+    showProfileScreen();
+  }
+  bindEvents();
+}
+
+// ============================================================
+// PERFIL
+// ============================================================
+
+function showProfileScreen() {
+  profileScreen.style.display = 'flex';
+  appEl.style.display = 'none';
+}
+
+function selectProfile(profileKey) {
+  state.profile = profileKey;
+  saveProfile(profileKey);
+  profileScreen.style.display = 'none';
+  appEl.style.display = 'flex';
+  const p = PROFILES[profileKey];
+  profileBadge.textContent = `${p.icon} ${p.name}`;
+  listWelcomeTitle.textContent = `Hola, ${p.name}`;
+  showSongList();
+}
+
+// ============================================================
+// LISTA DE CANCIONES
+// ============================================================
+
+function showSongList() {
+  state.currentSongId = null;
+  state.currentTab = 'common';
+  stopScroll();
+  songListView.classList.remove('hidden');
+  songDetailView.classList.add('hidden');
+  btnBack.classList.add('hidden');
+  headerTitle.textContent = 'Cancionero';
+  renderSongList();
+}
+
+function renderSongList() {
+  songsGrid.innerHTML = '';
+  state.songs.forEach(song => {
+    const card = document.createElement('div');
+    card.className = 'song-card';
+    card.innerHTML = `
+      <div class="song-card-info">
+        <div class="song-card-title">${escapeHtml(song.title)}</div>
+        <div class="song-card-artist">${escapeHtml(song.artist)}</div>
+      </div>
+      <span class="song-card-arrow">›</span>
+    `;
+    card.addEventListener('click', () => openSong(song.id));
+    songsGrid.appendChild(card);
+  });
+}
+
+// ============================================================
+// DETALLE DE CANCIÓN
+// ============================================================
+
+function openSong(songId) {
+  state.currentSongId = songId;
+  state.currentTab = 'common';
+  state.semitones = 0;
+  transposeDisplay.textContent = '0';
+  songListView.classList.add('hidden');
+  songDetailView.classList.remove('hidden');
+  btnBack.classList.remove('hidden');
+  const song = getSong(songId);
+  headerTitle.textContent = song.title;
+  renderSongDetail();
+  setActiveTab('common');
+}
+
+function getSong(id) {
+  return state.songs.find(s => s.id === id);
+}
+
+function renderSongDetail() {
+  const song = getSong(state.currentSongId);
+  if (!song) return;
+  detailTitle.textContent = song.title;
+  detailArtist.textContent = song.artist;
+  if (song.updatedBy && song.updatedAt) {
+    const pName = PROFILES[song.updatedBy]?.name || song.updatedBy;
+    detailEditInfo.textContent = `Última edición: ${pName} · ${timeAgo(song.updatedAt)}`;
+  } else {
+    detailEditInfo.textContent = '';
+  }
+  // Render contenido común
+  const processed = processContent(song.content, state.semitones, state.notation);
+  songContent.innerHTML = renderContent(processed);
+  // Actualizar zoom
+  songView.className = `song-view zoom-${state.zoom}`;
+  // Render anotaciones
+  INSTRUMENT_TABS.forEach(({ key }) => {
+    renderAnnotationPane(key);
+  });
+}
+
+function renderAnnotationPane(key) {
+  const song = getSong(state.currentSongId);
+  if (!song) return;
+  const ann = song.annotations[key];
+  const pane = document.getElementById(`av-${key}`);
+  const prof = PROFILES[key];
+  const isOwner = state.profile === key;
+
+  if (!ann || !ann.content) {
+    // Vacío
+    let html = `<div class="annotation-empty">
+      <div class="annotation-empty-icon">${prof.icon}</div>
+      <div class="annotation-empty-msg">${prof.name} aún no ha añadido sus anotaciones para esta canción.</div>`;
+    if (isOwner) {
+      html += `<button class="btn-add-annotation" onclick="openAnnotationEditor('${key}')">Añadir mis anotaciones</button>`;
+    }
+    html += `</div>`;
+    pane.innerHTML = html;
+  } else {
+    const editBtn = isOwner
+      ? `<button class="btn-edit-annotation" onclick="openAnnotationEditor('${key}')">Editar</button>`
+      : '';
+    const timeInfo = ann.updatedAt
+      ? `<div class="annotation-edit-info">Actualizado ${timeAgo(ann.updatedAt)}</div>` : '';
+    pane.innerHTML = `
+      <div class="annotation-header">
+        <span class="annotation-owner-badge">${prof.icon} <strong>${prof.name}</strong> · ${prof.instrument}</span>
+        ${editBtn}
+      </div>
+      <pre class="annotation-content">${escapeHtml(ann.content)}</pre>
+      ${timeInfo}
+    `;
+  }
+}
+
+// ============================================================
+// PESTAÑAS
+// ============================================================
+
+function setActiveTab(tabKey) {
+  state.currentTab = tabKey;
+  // Botones
+  document.querySelectorAll('.itab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabKey);
+  });
+  // Paneles
+  document.querySelectorAll('.tab-pane').forEach(pane => {
+    pane.classList.remove('active');
+  });
+  const targetPane = tabKey === 'common' ? 'pane-common' : `pane-${tabKey}`;
+  const paneEl = document.getElementById(targetPane);
+  if (paneEl) paneEl.classList.add('active');
+  // Scroll FAB solo en pestaña común
+  if (tabKey === 'common') {
+    scrollFab.classList.toggle('visible', state.scrollActive);
+  } else {
+    scrollFab.classList.remove('visible');
+    stopScroll();
+  }
+}
+
+// ============================================================
+// MODAL DE EDICIÓN
+// ============================================================
+
+function openCommonEditor() {
+  const song = getSong(state.currentSongId);
+  state.modalMode = 'common';
+  modalTitle.textContent = `Editar: ${song.title}`;
+  modalSongFields.classList.remove('hidden');
+  modalContentLabel.textContent = 'Contenido (letra y acordes)';
+  modalSongTitle.value = song.title;
+  modalSongArtist.value = song.artist;
+  modalContent.value = song.content;
+  openModal();
+}
+
+function openAnnotationEditor(key) {
+  const song = getSong(state.currentSongId);
+  if (state.profile !== key) return;
+  state.modalMode = 'annotation';
+  state.modalAnnotationKey = key;
+  const prof = PROFILES[key];
+  modalTitle.textContent = `Mis anotaciones: ${song.title}`;
+  modalSongFields.classList.add('hidden');
+  modalContentLabel.textContent = `Anotaciones de ${prof.name} (${prof.instrument})`;
+  modalContent.value = song.annotations[key]?.content || '';
+  openModal();
+}
+
+function openModal() {
+  editModal.classList.add('open');
+  setTimeout(() => modalContent.focus(), 300);
+}
+
+function closeModal() {
+  editModal.classList.remove('open');
+}
+
+function saveModal() {
+  const song = getSong(state.currentSongId);
+  const idx = state.songs.findIndex(s => s.id === state.currentSongId);
+  if (idx === -1) return;
+
+  if (state.modalMode === 'common') {
+    state.songs[idx].title   = modalSongTitle.value.trim() || song.title;
+    state.songs[idx].artist  = modalSongArtist.value.trim() || song.artist;
+    state.songs[idx].content = modalContent.value;
+    state.songs[idx].updatedBy = state.profile;
+    state.songs[idx].updatedAt = new Date().toISOString();
+  } else if (state.modalMode === 'annotation') {
+    const key = state.modalAnnotationKey;
+    state.songs[idx].annotations[key].content   = modalContent.value;
+    state.songs[idx].annotations[key].updatedAt = new Date().toISOString();
+  }
+
+  saveSongs(state.songs);
+  closeModal();
+  renderSongDetail();
+  showToast('Guardado');
+}
+
+// ============================================================
+// AUTO-SCROLL
+// ============================================================
+
+function startScroll() {
+  state.scrollActive = true;
+  btnScrollToggle.textContent = '⏸';
+  btnScrollToggle.classList.remove('active');
+  scrollFab.textContent = '⏸';
+  scrollFab.classList.add('visible');
+  scrollAccum = 0;
+  lastScrollTime = performance.now();
+  scrollRAF = requestAnimationFrame(scrollTick);
+}
+
+function stopScroll() {
+  state.scrollActive = false;
+  btnScrollToggle.textContent = '▶';
+  scrollFab.textContent = '▶';
+  if (scrollRAF) { cancelAnimationFrame(scrollRAF); scrollRAF = null; }
+  if (state.currentTab === 'common') {
+    scrollFab.classList.add('visible');
+  } else {
+    scrollFab.classList.remove('visible');
+  }
+}
+
+function toggleScroll() {
+  if (state.scrollActive) stopScroll();
+  else startScroll();
+}
+
+function scrollTick(now) {
+  if (!state.scrollActive) return;
+  const dt = now - lastScrollTime;
+  lastScrollTime = now;
+  scrollAccum += (state.scrollSpeed * dt) / 1000;
+  const pixels = Math.floor(scrollAccum);
+  if (pixels > 0) {
+    const area = document.getElementById('song-scroll-area');
+    if (area) area.scrollTop += pixels;
+    scrollAccum -= pixels;
+  }
+  scrollRAF = requestAnimationFrame(scrollTick);
+}
+
+// ============================================================
+// TRANSPOSICIÓN
+// ============================================================
+
+function setTranspose(semitones) {
+  state.semitones = semitones;
+  transposeDisplay.textContent = semitones === 0 ? '0' : (semitones > 0 ? `+${semitones}` : `${semitones}`);
+  refreshSongContent();
+}
+
+function refreshSongContent() {
+  const song = getSong(state.currentSongId);
+  if (!song) return;
+  const processed = processContent(song.content, state.semitones, state.notation);
+  songContent.innerHTML = renderContent(processed);
+}
+
+// ============================================================
+// NOTACIÓN
+// ============================================================
+
+function setNotation(notation) {
+  state.notation = notation;
+  document.getElementById('btn-notation-lat').classList.toggle('active', notation === 'lat');
+  document.getElementById('btn-notation-ang').classList.toggle('active', notation === 'ang');
+  refreshSongContent();
+}
+
+// ============================================================
+// ZOOM
+// ============================================================
+
+function setZoom(z) {
+  state.zoom = Math.max(1, Math.min(5, z));
+  songView.className = `song-view zoom-${state.zoom}`;
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+
+let toastTimer = null;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
+}
+
+// ============================================================
+// EVENTOS
+// ============================================================
+
+function bindEvents() {
+  // Selector de perfil
+  document.querySelectorAll('.profile-card').forEach(card => {
+    card.addEventListener('click', () => selectProfile(card.dataset.profile));
+  });
+
+  // Badge de perfil (cambiar)
+  profileBadge.addEventListener('click', () => {
+    stopScroll();
+    showProfileScreen();
+  });
+
+  // Botón atrás
+  btnBack.addEventListener('click', showSongList);
+
+  // Pestañas de instrumento
+  document.querySelectorAll('.itab').forEach(btn => {
+    btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+  });
+
+  // Tap en el área de scroll: pausa el scroll
+  document.getElementById('song-scroll-area').addEventListener('click', (e) => {
+    if (state.scrollActive) {
+      e.stopPropagation();
+      stopScroll();
     }
   });
-  document.getElementById('btn-back').addEventListener('click', () => {
-    stopPlay();
-    document.getElementById('detail-view').classList.remove('active');
-    document.getElementById('list-view').classList.add('active');
-    renderList();
+
+  // Toolbar: transponer
+  document.getElementById('btn-transpose-up').addEventListener('click', () => {
+    setTranspose(Math.min(11, state.semitones + 1));
   });
-  document.getElementById('btn-edit').addEventListener('click', () => openModal(currentId));
-  document.getElementById('btn-print').addEventListener('click', () => window.print());
-  document.getElementById('btn-notation').addEventListener('click', cycleNotation);
-  document.getElementById('t-up').addEventListener('click', () => {
-    transpose = Math.min(11, transpose + 1);
-    document.getElementById('t-val').textContent = (transpose > 0 ? '+' : '') + transpose;
-    updateLyrics();
+  document.getElementById('btn-transpose-down').addEventListener('click', () => {
+    setTranspose(Math.max(-11, state.semitones - 1));
   });
-  document.getElementById('t-down').addEventListener('click', () => {
-    transpose = Math.max(-11, transpose - 1);
-    document.getElementById('t-val').textContent = (transpose > 0 ? '+' : '') + transpose;
-    updateLyrics();
-  });
-  document.getElementById('zoom-in').addEventListener('click', () => {
-    zoomLevel = Math.min(4, zoomLevel + 1);
-    updateLyrics();
-  });
-  document.getElementById('zoom-out').addEventListener('click', () => {
-    zoomLevel = Math.max(0, zoomLevel - 1);
-    updateLyrics();
-  });
-  document.getElementById('m-cancel').addEventListener('click', closeModal);
-  document.getElementById('m-save').addEventListener('click', saveFromModal);
-  document.getElementById('modal').addEventListener('click', (e) => {
-    if (e.target.id === 'modal') closeModal();
+  document.getElementById('btn-transpose-reset').addEventListener('click', () => {
+    setTranspose(0);
   });
 
-  // Auto-scroll listeners
-  document.getElementById('btn-play').addEventListener('click', togglePlay);
-  document.getElementById('speed-up').addEventListener('click', () => changeSpeed(5));
-  document.getElementById('speed-down').addEventListener('click', () => changeSpeed(-5));
+  // Toolbar: notación
+  document.getElementById('btn-notation-lat').addEventListener('click', () => setNotation('lat'));
+  document.getElementById('btn-notation-ang').addEventListener('click', () => setNotation('ang'));
 
-  // Tap en la letra pausa/reanuda el autoscroll (cómodo con guitarra en las manos)
-  document.getElementById('lyrics').addEventListener('click', (e) => {
-    // Solo si estamos en la vista de detalle
-    if (document.getElementById('detail-view').classList.contains('active')) {
-      togglePlay();
-    }
+  // Toolbar: zoom
+  document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(state.zoom + 1));
+  document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(state.zoom - 1));
+
+  // Toolbar: scroll
+  btnScrollToggle.addEventListener('click', toggleScroll);
+  document.getElementById('btn-scroll-slower').addEventListener('click', () => {
+    state.scrollSpeed = Math.max(5, state.scrollSpeed - 10);
+    scrollSpeedDisp.textContent = state.scrollSpeed;
+  });
+  document.getElementById('btn-scroll-faster').addEventListener('click', () => {
+    state.scrollSpeed = Math.min(150, state.scrollSpeed + 10);
+    scrollSpeedDisp.textContent = state.scrollSpeed;
   });
 
-  // Si el usuario hace scroll manual mientras está reproduciendo, no detener
-  // (el rAF y el scroll manual se suman naturalmente)
+  // FAB de scroll
+  scrollFab.addEventListener('click', toggleScroll);
 
-  // Atajos de teclado
+  // Barra espaciadora
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (document.getElementById('modal').classList.contains('show')) closeModal();
-      else if (isPlaying) stopPlay();
+    if (e.code === 'Space' && state.currentSongId && state.currentTab === 'common') {
+      const tag = document.activeElement.tagName;
+      if (tag !== 'TEXTAREA' && tag !== 'INPUT') {
+        e.preventDefault();
+        toggleScroll();
+      }
     }
-    // No procesar atajos si está abierto el modal o si hay un input/textarea con foco
-    if (document.getElementById('modal').classList.contains('show')) return;
-    const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea') return;
-    // Solo en vista detalle
-    if (!document.getElementById('detail-view').classList.contains('active')) return;
-
-    if (e.key === ' ') { e.preventDefault(); togglePlay(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); changeSpeed(5); }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); changeSpeed(-5); }
-    else if (e.key === '+' || e.key === '=') { changeSpeed(5); }
-    else if (e.key === '-' || e.key === '_') { changeSpeed(-5); }
   });
 
-  // Si el usuario cambia de pestaña, parar para no descuadrarse
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && isPlaying) stopPlay();
+  // Imprimir
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  // YouTube
+  document.getElementById('btn-youtube').addEventListener('click', () => {
+    const song = getSong(state.currentSongId);
+    if (song && song.youtube) {
+      window.open(song.youtube, '_blank', 'noopener');
+    } else {
+      showToast('No hay enlace disponible para esta canción');
+    }
   });
 
-  // Init
-  loadSongs();
-  loadSpeed();
-  updateNotationBtn();
-  renderList();
-})();
+  // Sincronización Firebase
+  btnUpload.addEventListener('click', uploadToCloud);
+  btnDownload.addEventListener('click', downloadFromCloud);
+
+  // Modal: cerrar
+  modalClose.addEventListener('click', closeModal);
+  modalCancel.addEventListener('click', closeModal);
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) closeModal();
+  });
+
+  // Modal: guardar
+  modalSave.addEventListener('click', saveModal);
+
+  // Doble click en contenido común para editar
+  songContent.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    openCommonEditor();
+  });
+
+  // Botón "editar" explícito en cabecera de canción (click en título)
+  detailTitle.style.cursor = 'pointer';
+  detailTitle.title = 'Doble clic en la letra para editar';
+}
+
+// ============================================================
+// Exponer funciones globales para onclick inline
+// ============================================================
+
+window.openAnnotationEditor = openAnnotationEditor;
+window.openCommonEditor = openCommonEditor;
+
+// ============================================================
+// ARRANCAR
+// ============================================================
+
+init();
+
+// Inicializar botones de notación
+document.getElementById('btn-notation-lat').classList.add('active');
 </script>
 </body>
 </html>
