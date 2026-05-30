@@ -941,6 +941,130 @@
     .song-view { padding: 1.75rem 2rem 5rem; }
     .annotation-view { padding: 1.75rem 2rem 5rem; }
   }
+  /* ===== AFINADOR ===== */
+  .tuner-strings {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    width: 100%;
+  }
+
+  .tuner-string-btn {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-mono);
+    transition: all 0.15s;
+    min-width: 52px;
+    text-align: center;
+  }
+
+  .tuner-string-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tuner-string-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .tuner-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .tuner-note-name {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+    min-height: 4rem;
+    transition: color 0.2s;
+  }
+
+  .tuner-note-name.in-tune { color: #16A34A; }
+  .tuner-note-name.sharp   { color: #DC2626; }
+  .tuner-note-name.flat    { color: #2563EB; }
+
+  .tuner-cents {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--text2);
+    min-height: 1.4rem;
+  }
+
+  .tuner-meter {
+    width: 100%;
+    max-width: 300px;
+    margin: 0.25rem 0;
+  }
+
+  .tuner-meter-track {
+    position: relative;
+    height: 12px;
+    background: var(--bg3);
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .tuner-meter-needle {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 6px;
+    background: var(--accent);
+    border-radius: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: left 0.1s ease-out, background 0.2s;
+  }
+
+  .tuner-meter-needle.in-tune { background: #16A34A; }
+
+  .tuner-meter-center {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: var(--text3);
+    opacity: 0.5;
+  }
+
+  .tuner-meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--text3);
+    margin-top: 0.2rem;
+    font-family: var(--font-mono);
+  }
+
+  .tuner-status {
+    font-size: 0.88rem;
+    color: var(--text2);
+    font-weight: 600;
+    min-height: 1.3rem;
+    text-align: center;
+  }
+
+  .tuner-status.in-tune { color: #16A34A; }
+
   /* ===== VISOR DE ACORDES ===== */
   .chord-diagram {
     display: flex;
@@ -1166,6 +1290,10 @@
       <div class="toolbar-group">
         <button class="tbtn" id="btn-chords" title="Consultar posición de acordes">🎸 Acordes</button>
       </div>
+      <!-- Afinador -->
+      <div class="toolbar-group">
+        <button class="tbtn" id="btn-tuner" title="Afinador de guitarra">🎵 Afinar</button>
+      </div>
     </div>
 
     <!-- Pestañas de instrumento -->
@@ -1250,6 +1378,53 @@
     <div class="modal-footer">
       <button class="btn-cancel" id="modal-cancel-btn">Cancelar</button>
       <button class="btn-save" id="modal-save-btn">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL AFINADOR ===== -->
+<div class="modal-overlay" id="tuner-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Afinador de guitarra</span>
+      <button class="modal-close" id="tuner-modal-close">&#215;</button>
+    </div>
+    <div class="modal-body" style="align-items:center;padding:1.5rem 1.25rem">
+      <!-- Cuerdas de referencia -->
+      <div class="tuner-strings" id="tuner-strings">
+        <button class="tuner-string-btn active" data-note="E2" data-freq="82.41">6 · MI</button>
+        <button class="tuner-string-btn" data-note="A2" data-freq="110.00">5 · LA</button>
+        <button class="tuner-string-btn" data-note="D3" data-freq="146.83">4 · RE</button>
+        <button class="tuner-string-btn" data-note="G3" data-freq="196.00">3 · SOL</button>
+        <button class="tuner-string-btn" data-note="B3" data-freq="246.94">2 · SI</button>
+        <button class="tuner-string-btn" data-note="E4" data-freq="329.63">1 · MI</button>
+      </div>
+
+      <!-- Display principal -->
+      <div class="tuner-display">
+        <div class="tuner-note-name" id="tuner-note-name">–</div>
+        <div class="tuner-cents" id="tuner-cents"></div>
+        <!-- Medidor -->
+        <div class="tuner-meter">
+          <div class="tuner-meter-track">
+            <div class="tuner-meter-needle" id="tuner-needle"></div>
+            <div class="tuner-meter-center"></div>
+          </div>
+          <div class="tuner-meter-labels">
+            <span>-50</span><span>0</span><span>+50</span>
+          </div>
+        </div>
+        <div class="tuner-status" id="tuner-status">Pulsa Iniciar para afinar</div>
+      </div>
+
+      <!-- Controles -->
+      <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
+        <button class="btn-save" id="tuner-start-btn">▶ Iniciar</button>
+        <button class="btn-cancel" id="tuner-stop-btn" disabled>⏹ Detener</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:0.75rem;text-align:center">
+        Requiere permiso de micrófono · Toca una cuerda suelta
+      </div>
     </div>
   </div>
 </div>
@@ -2237,6 +2412,22 @@ function bindEvents() {
     }
   });
 
+  // Afinador
+  document.getElementById('btn-tuner').addEventListener('click', openTunerModal);
+  document.getElementById('tuner-modal-close').addEventListener('click', closeTunerModal);
+  document.getElementById('tuner-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('tuner-modal')) closeTunerModal();
+  });
+  document.getElementById('tuner-start-btn').addEventListener('click', startTuner);
+  document.getElementById('tuner-stop-btn').addEventListener('click', stopTuner);
+  document.querySelectorAll('.tuner-string-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tuner-string-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tunerTargetFreq = parseFloat(btn.dataset.freq);
+    });
+  });
+
   // Botón acordes
   document.getElementById('btn-chords').addEventListener('click', openChordModal);
   document.getElementById('chord-modal-close').addEventListener('click', closeChordModal);
@@ -2273,6 +2464,165 @@ function bindEvents() {
   // Botón "editar" explícito en cabecera de canción (click en título)
   detailTitle.style.cursor = 'pointer';
   detailTitle.title = 'Doble clic en la letra para editar';
+}
+
+// ============================================================
+// AFINADOR
+// ============================================================
+
+const NOTE_NAMES_LAT = ['DO','DO#','RE','RE#','MI','FA','FA#','SOL','SOL#','LA','LA#','SI'];
+const NOTE_NAMES_ANG = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+let tunerAudioCtx   = null;
+let tunerAnalyser   = null;
+let tunerStream     = null;
+let tunerRAF        = null;
+let tunerRunning    = false;
+let tunerTargetFreq = 82.41; // MI grave por defecto
+
+function freqToNoteLat(freq) {
+  if (freq <= 0) return null;
+  const noteNum = 12 * (Math.log2(freq / 440)) + 69;
+  const rounded = Math.round(noteNum);
+  const cents   = Math.round((noteNum - rounded) * 100);
+  const octave  = Math.floor(rounded / 12) - 1;
+  const name    = NOTE_NAMES_LAT[((rounded % 12) + 12) % 12];
+  return { name: `${name}${octave}`, nameShort: name, cents, freq };
+}
+
+// Autocorrelación para detectar el pitch fundamental
+function autoCorrelate(buf, sampleRate) {
+  const SIZE = buf.length;
+  const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / SIZE);
+  if (rms < 0.008) return -1; // señal muy débil
+
+  let r1 = 0, r2 = SIZE - 1;
+  const thres = 0.2;
+  for (let i = 0; i < SIZE / 2; i++) {
+    if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+  }
+  for (let i = 1; i < SIZE / 2; i++) {
+    if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+  }
+  const sliced = buf.slice(r1, r2);
+  const len = sliced.length;
+
+  const c = new Float32Array(len).fill(0);
+  for (let i = 0; i < len; i++) {
+    for (let j = 0; j < len - i; j++) {
+      c[i] += sliced[j] * sliced[j + i];
+    }
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+  let maxVal = -1, maxPos = -1;
+  for (let i = d; i < len; i++) {
+    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  }
+  if (maxPos === -1) return -1;
+
+  // Interpolación parabólica para más precisión
+  let T0 = maxPos;
+  const x1 = c[T0 - 1] || 0, x2 = c[T0], x3 = c[T0 + 1] || 0;
+  const a = (x1 + x3 - 2 * x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
+
+  return sampleRate / T0;
+}
+
+function tunerTick() {
+  if (!tunerRunning) return;
+  const buf = new Float32Array(tunerAnalyser.fftSize);
+  tunerAnalyser.getFloatTimeDomainData(buf);
+  const freq = autoCorrelate(buf, tunerAudioCtx.sampleRate);
+
+  const noteEl    = document.getElementById('tuner-note-name');
+  const centsEl   = document.getElementById('tuner-cents');
+  const needleEl  = document.getElementById('tuner-needle');
+  const statusEl  = document.getElementById('tuner-status');
+
+  if (freq > 0) {
+    const info = freqToNoteLat(freq);
+    if (info) {
+      noteEl.textContent = info.nameShort;
+      const c = info.cents;
+      centsEl.textContent = `${c >= 0 ? '+' : ''}${c} cents · ${freq.toFixed(1)} Hz`;
+
+      // Posición de la aguja: 0% = -50 cents, 50% = 0, 100% = +50
+      const pct = Math.max(0, Math.min(100, 50 + c));
+      needleEl.style.left = `${pct}%`;
+
+      const inTune = Math.abs(c) <= 5;
+      noteEl.className   = 'tuner-note-name' + (inTune ? ' in-tune' : c > 0 ? ' sharp' : ' flat');
+      needleEl.className = 'tuner-meter-needle' + (inTune ? ' in-tune' : '');
+
+      if (inTune) {
+        statusEl.textContent = '✓ Afinado';
+        statusEl.className = 'tuner-status in-tune';
+      } else if (c > 0) {
+        statusEl.textContent = 'Demasiado alto — baja la clavija';
+        statusEl.className = 'tuner-status';
+      } else {
+        statusEl.textContent = 'Demasiado bajo — sube la clavija';
+        statusEl.className = 'tuner-status';
+      }
+    }
+  } else {
+    noteEl.textContent  = '–';
+    noteEl.className    = 'tuner-note-name';
+    centsEl.textContent = '';
+    needleEl.style.left = '50%';
+    needleEl.className  = 'tuner-meter-needle';
+    statusEl.textContent = 'Toca una cuerda…';
+    statusEl.className   = 'tuner-status';
+  }
+
+  tunerRAF = requestAnimationFrame(tunerTick);
+}
+
+async function startTuner() {
+  try {
+    tunerStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    tunerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    tunerAnalyser = tunerAudioCtx.createAnalyser();
+    tunerAnalyser.fftSize = 2048;
+    const src = tunerAudioCtx.createMediaStreamSource(tunerStream);
+    src.connect(tunerAnalyser);
+    tunerRunning = true;
+    document.getElementById('tuner-start-btn').disabled = true;
+    document.getElementById('tuner-stop-btn').disabled  = false;
+    document.getElementById('tuner-status').textContent = 'Escuchando… toca una cuerda';
+    tunerRAF = requestAnimationFrame(tunerTick);
+  } catch(err) {
+    document.getElementById('tuner-status').textContent = 'No se pudo acceder al micrófono';
+    console.error('Tuner mic error:', err);
+  }
+}
+
+function stopTuner() {
+  tunerRunning = false;
+  if (tunerRAF) { cancelAnimationFrame(tunerRAF); tunerRAF = null; }
+  if (tunerStream) { tunerStream.getTracks().forEach(t => t.stop()); tunerStream = null; }
+  if (tunerAudioCtx) { tunerAudioCtx.close(); tunerAudioCtx = null; }
+  document.getElementById('tuner-start-btn').disabled = false;
+  document.getElementById('tuner-stop-btn').disabled  = true;
+  document.getElementById('tuner-note-name').textContent = '–';
+  document.getElementById('tuner-note-name').className   = 'tuner-note-name';
+  document.getElementById('tuner-cents').textContent     = '';
+  document.getElementById('tuner-needle').style.left     = '50%';
+  document.getElementById('tuner-status').textContent    = 'Pulsa Iniciar para afinar';
+  document.getElementById('tuner-status').className      = 'tuner-status';
+}
+
+function openTunerModal() {
+  document.getElementById('tuner-modal').classList.add('open');
+}
+
+function closeTunerModal() {
+  stopTuner();
+  document.getElementById('tuner-modal').classList.remove('open');
 }
 
 // ============================================================
