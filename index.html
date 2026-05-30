@@ -896,6 +896,23 @@
     .sync-status { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
   }
 
+  .btn-new-song {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+
+  .btn-new-song:hover { background: var(--accent-light); }
+
   /* ===== RESPONSIVE: TOOLBAR EN MÓVIL ===== */
   @media (max-width: 599px) {
     .song-toolbar {
@@ -924,6 +941,86 @@
     .song-view { padding: 1.75rem 2rem 5rem; }
     .annotation-view { padding: 1.75rem 2rem 5rem; }
   }
+  /* ===== VISOR DE ACORDES ===== */
+  .chord-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+  }
+  .chord-name-display {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .chord-svg-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+  }
+  .chord-variation-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .chord-variation-label {
+    font-size: 0.72rem;
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .chord-not-found {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text2);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .btn-external-chord {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn-external-chord:hover { background: var(--accent-light); }
+  .chord-quick-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text2);
+    font-family: var(--font-mono);
+    transition: all 0.15s;
+  }
+  .chord-quick-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
   @media print {
     .app-header, .song-toolbar, .instrument-tabs, .scroll-indicator { display: none !important; }
     .song-view { padding: 0; }
@@ -1013,8 +1110,13 @@
   <div id="song-list-view">
     <div class="song-list-container">
       <div class="song-list-welcome">
-        <h2 id="list-welcome-title">Canciones</h2>
-        <p>4 canciones · Toca para ver letra y acordes</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+          <div>
+            <h2 id="list-welcome-title">Canciones</h2>
+            <p id="list-subtitle">Toca para ver letra y acordes</p>
+          </div>
+          <button class="btn-new-song" id="btn-new-song">＋ Nueva canción</button>
+        </div>
       </div>
       <div class="songs-grid" id="songs-grid"></div>
     </div>
@@ -1059,6 +1161,10 @@
       <!-- YouTube -->
       <div class="toolbar-group">
         <button class="tbtn tbtn-icon" id="btn-youtube" title="Ver/escuchar en YouTube">▶ YT</button>
+      </div>
+      <!-- Acordes -->
+      <div class="toolbar-group">
+        <button class="tbtn" id="btn-chords" title="Consultar posición de acordes">🎸 Acordes</button>
       </div>
     </div>
 
@@ -1131,6 +1237,10 @@
           <label class="field-label">Artista</label>
           <input type="text" class="field-input" id="modal-song-artist" placeholder="Artista o banda">
         </div>
+        <div style="margin-bottom:0.75rem">
+          <label class="field-label">Enlace YouTube (opcional)</label>
+          <input type="url" class="field-input" id="modal-song-youtube" placeholder="https://youtu.be/...">
+        </div>
       </div>
       <div>
         <label class="field-label" id="modal-content-label">Contenido (letra y acordes)</label>
@@ -1144,7 +1254,25 @@
   </div>
 </div>
 
-<!-- Auto-scroll FAB -->
+<!-- ===== MODAL DE ACORDES ===== -->
+<div class="modal-overlay" id="chord-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Consultar acorde</span>
+      <button class="modal-close" id="chord-modal-close">&#215;</button>
+    </div>
+    <div class="modal-body" style="gap:0.75rem">
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <input type="text" class="field-input" id="chord-search-input" placeholder="Escribe un acorde: Lam, Sol, Re7…" style="flex:1">
+        <button class="btn-save" id="chord-search-btn" style="white-space:nowrap">Buscar</button>
+      </div>
+      <div id="chord-quick-btns" style="display:flex;flex-wrap:wrap;gap:0.35rem"></div>
+      <div id="chord-result"></div>
+    </div>
+  </div>
+</div>
+
+
 <button class="scroll-indicator" id="scroll-fab" title="Pausar/Reanudar scroll">⏸</button>
 
 <!-- Toast -->
@@ -1640,6 +1768,7 @@ const modalSave       = document.getElementById('modal-save-btn');
 const modalSongFields = document.getElementById('modal-song-fields');
 const modalSongTitle  = document.getElementById('modal-song-title');
 const modalSongArtist = document.getElementById('modal-song-artist');
+const modalSongYoutube= document.getElementById('modal-song-youtube');
 const modalContent    = document.getElementById('modal-content');
 const modalContentLabel=document.getElementById('modal-content-label');
 
@@ -1697,6 +1826,8 @@ function showSongList() {
 }
 
 function renderSongList() {
+  const subtitle = document.getElementById('list-subtitle');
+  if (subtitle) subtitle.textContent = `${state.songs.length} canciones · Toca para ver letra y acordes`;
   songsGrid.innerHTML = '';
   state.songs.forEach(song => {
     const card = document.createElement('div');
@@ -1822,6 +1953,18 @@ function setActiveTab(tabKey) {
 // MODAL DE EDICIÓN
 // ============================================================
 
+function openNewSongEditor() {
+  state.modalMode = 'new';
+  modalTitle.textContent = 'Nueva canción';
+  modalSongFields.classList.remove('hidden');
+  modalContentLabel.textContent = 'Contenido (letra y acordes)';
+  modalSongTitle.value = '';
+  modalSongArtist.value = '';
+  modalSongYoutube.value = '';
+  modalContent.value = '';
+  openModal();
+}
+
 function openCommonEditor() {
   const song = getSong(state.currentSongId);
   state.modalMode = 'common';
@@ -1830,6 +1973,7 @@ function openCommonEditor() {
   modalContentLabel.textContent = 'Contenido (letra y acordes)';
   modalSongTitle.value = song.title;
   modalSongArtist.value = song.artist;
+  modalSongYoutube.value = song.youtube || '';
   modalContent.value = song.content;
   openModal();
 }
@@ -1857,6 +2001,32 @@ function closeModal() {
 }
 
 function saveModal() {
+  if (state.modalMode === 'new') {
+    const title = modalSongTitle.value.trim();
+    if (!title) { showToast('El título no puede estar vacío'); return; }
+    const newSong = {
+      id: 's_' + Date.now(),
+      title,
+      artist: modalSongArtist.value.trim() || '',
+      content: modalContent.value,
+      youtube: modalSongYoutube.value.trim(),
+      updatedBy: state.profile,
+      updatedAt: new Date().toISOString(),
+      annotations: {
+        guitarra1: { content: '', updatedAt: null },
+        guitarra2: { content: '', updatedAt: null },
+        bajo:      { content: '', updatedAt: null },
+        bateria:   { content: '', updatedAt: null }
+      }
+    };
+    state.songs.push(newSong);
+    saveSongs(state.songs);
+    closeModal();
+    renderSongList();
+    showToast('Canción añadida · Recuerda subir a la nube');
+    return;
+  }
+
   const song = getSong(state.currentSongId);
   const idx = state.songs.findIndex(s => s.id === state.currentSongId);
   if (idx === -1) return;
@@ -1864,6 +2034,7 @@ function saveModal() {
   if (state.modalMode === 'common') {
     state.songs[idx].title   = modalSongTitle.value.trim() || song.title;
     state.songs[idx].artist  = modalSongArtist.value.trim() || song.artist;
+    state.songs[idx].youtube = modalSongYoutube.value.trim();
     state.songs[idx].content = modalContent.value;
     state.songs[idx].updatedBy = state.profile;
     state.songs[idx].updatedAt = new Date().toISOString();
@@ -1979,6 +2150,9 @@ function showToast(msg) {
 // ============================================================
 
 function bindEvents() {
+  // Botón nueva canción
+  document.getElementById('btn-new-song').addEventListener('click', openNewSongEditor);
+
   // Selector de perfil
   document.querySelectorAll('.profile-card').forEach(card => {
     card.addEventListener('click', () => selectProfile(card.dataset.profile));
@@ -2063,6 +2237,19 @@ function bindEvents() {
     }
   });
 
+  // Botón acordes
+  document.getElementById('btn-chords').addEventListener('click', openChordModal);
+  document.getElementById('chord-modal-close').addEventListener('click', closeChordModal);
+  document.getElementById('chord-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('chord-modal')) closeChordModal();
+  });
+  document.getElementById('chord-search-btn').addEventListener('click', () => {
+    renderChordResult(document.getElementById('chord-search-input').value);
+  });
+  document.getElementById('chord-search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') renderChordResult(document.getElementById('chord-search-input').value);
+  });
+
   // Sincronización Firebase
   btnUpload.addEventListener('click', uploadToCloud);
   btnDownload.addEventListener('click', downloadFromCloud);
@@ -2089,11 +2276,302 @@ function bindEvents() {
 }
 
 // ============================================================
-// Exponer funciones globales para onclick inline
+// VISOR DE ACORDES
+// ============================================================
+
+// Base de datos de acordes
+// Formato: cada acorde tiene un array de variaciones
+// Cada variación: { label, fret (cejilla), fingers: [cuerda6..cuerda1] }
+// fingers: número de traste, 0=al aire, -1=no se toca, 'x'=no se toca
+// cuerda 6 = más grave (MI bajo), cuerda 1 = más aguda (MI agudo)
+
+const CHORD_DB = {
+  // ---- MAYORES ----
+  'DO': [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 2, 0, 1, 0] }],
+  'C':  [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 2, 0, 1, 0] }],
+  'RE': [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 2] }],
+  'D':  [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 2] }],
+  'MI': [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 1, 0, 0] }],
+  'E':  [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 1, 0, 0] }],
+  'FA': [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 3, 2, 1, 1] }],
+  'F':  [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 3, 2, 1, 1] }],
+  'SOL': [{ label: 'Abierto', fret: 0, fingers: [3, 2, 0, 0, 0, 3] }, { label: 'Variante', fret: 0, fingers: [3, 2, 0, 0, 3, 3] }],
+  'G':  [{ label: 'Abierto', fret: 0, fingers: [3, 2, 0, 0, 0, 3] }],
+  'LA': [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 2, 2, 0] }],
+  'A':  [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 2, 2, 0] }],
+  'SI': [{ label: 'Cejilla 2', fret: 2, fingers: [-1, 2, 4, 4, 4, 2] }],
+  'B':  [{ label: 'Cejilla 2', fret: 2, fingers: [-1, 2, 4, 4, 4, 2] }],
+
+  // ---- MENORES ----
+  'DOM': [{ label: 'Cejilla 3', fret: 3, fingers: [-1, 3, 5, 5, 4, 3] }],
+  'CM':  [{ label: 'Cejilla 3', fret: 3, fingers: [-1, 3, 5, 5, 4, 3] }],
+  'REM': [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 1] }],
+  'DM':  [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 1] }],
+  'MIM': [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 0, 0, 0] }],
+  'EM':  [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 0, 0, 0] }],
+  'FAM': [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 3, 1, 1, 1] }],
+  'FM':  [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 3, 1, 1, 1] }],
+  'SOLM': [{ label: 'Cejilla 3', fret: 3, fingers: [3, 5, 5, 3, 3, 3] }],
+  'GM':  [{ label: 'Cejilla 3', fret: 3, fingers: [3, 5, 5, 3, 3, 3] }],
+  'LAM': [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 2, 1, 0] }],
+  'AM':  [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 2, 1, 0] }],
+  'SIM': [{ label: 'Cejilla 2', fret: 2, fingers: [-1, 2, 4, 4, 3, 2] }],
+  'BM':  [{ label: 'Cejilla 2', fret: 2, fingers: [-1, 2, 4, 4, 3, 2] }],
+
+  // ---- SÉPTIMAS ----
+  'DO7': [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 2, 3, 1, 0] }],
+  'C7':  [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 2, 3, 1, 0] }],
+  'RE7': [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 1, 2] }],
+  'D7':  [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 1, 2] }],
+  'MI7': [{ label: 'Abierto', fret: 0, fingers: [0, 2, 0, 1, 0, 0] }],
+  'E7':  [{ label: 'Abierto', fret: 0, fingers: [0, 2, 0, 1, 0, 0] }],
+  'FA7': [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 1, 2, 1, 1] }],
+  'F7':  [{ label: 'Cejilla 1', fret: 1, fingers: [1, 3, 1, 2, 1, 1] }],
+  'SOL7': [{ label: 'Abierto', fret: 0, fingers: [3, 2, 0, 0, 0, 1] }],
+  'G7':  [{ label: 'Abierto', fret: 0, fingers: [3, 2, 0, 0, 0, 1] }],
+  'LA7': [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 0, 2, 0] }],
+  'A7':  [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 0, 2, 0] }],
+  'SI7': [{ label: 'Abierto', fret: 0, fingers: [-1, 2, 1, 2, 0, 2] }],
+  'B7':  [{ label: 'Abierto', fret: 0, fingers: [-1, 2, 1, 2, 0, 2] }],
+
+  // ---- MENORES SÉPTIMAS ----
+  'LAM7': [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 0, 1, 0] }],
+  'AM7':  [{ label: 'Abierto', fret: 0, fingers: [-1, 0, 2, 0, 1, 0] }],
+  'REM7': [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 1, 1] }],
+  'DM7':  [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 1, 1] }],
+  'MIM7': [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 0, 3, 0] }],
+  'EM7':  [{ label: 'Abierto', fret: 0, fingers: [0, 2, 2, 0, 3, 0] }],
+
+  // ---- SOSTENIDOS / BEMOLES COMUNES ----
+  'FA#M': [{ label: 'Cejilla 2', fret: 2, fingers: [2, 4, 4, 2, 2, 2] }],
+  'F#M':  [{ label: 'Cejilla 2', fret: 2, fingers: [2, 4, 4, 2, 2, 2] }],
+  'FA#':  [{ label: 'Cejilla 2', fret: 2, fingers: [2, 4, 4, 3, 2, 2] }],
+  'F#':   [{ label: 'Cejilla 2', fret: 2, fingers: [2, 4, 4, 3, 2, 2] }],
+  'DO#M': [{ label: 'Cejilla 4', fret: 4, fingers: [-1, 4, 6, 6, 5, 4] }],
+  'C#M':  [{ label: 'Cejilla 4', fret: 4, fingers: [-1, 4, 6, 6, 5, 4] }],
+  'DO#':  [{ label: 'Cejilla 4', fret: 4, fingers: [-1, 4, 6, 6, 6, 4] }],
+  'C#':   [{ label: 'Cejilla 4', fret: 4, fingers: [-1, 4, 6, 6, 6, 4] }],
+  'SIB':  [{ label: 'Cejilla 1', fret: 1, fingers: [-1, 1, 3, 3, 3, 1] }],
+  'BB':   [{ label: 'Cejilla 1', fret: 1, fingers: [-1, 1, 3, 3, 3, 1] }],
+  'SIBM': [{ label: 'Cejilla 1', fret: 1, fingers: [-1, 1, 3, 3, 2, 1] }],
+  'BBM':  [{ label: 'Cejilla 1', fret: 1, fingers: [-1, 1, 3, 3, 2, 1] }],
+
+  // ---- SUS ----
+  'DOSUS4': [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 3, 0, 1, 1] }],
+  'CSUS4':  [{ label: 'Abierto', fret: 0, fingers: [-1, 3, 3, 0, 1, 1] }],
+  'RESUS4': [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 3] }],
+  'DSUS4':  [{ label: 'Abierto', fret: 0, fingers: [-1, -1, 0, 2, 3, 3] }],
+  'SOLSUS4': [{ label: 'Abierto', fret: 0, fingers: [3, 3, 0, 0, 1, 3] }],
+  'GSUS4':  [{ label: 'Abierto', fret: 0, fingers: [3, 3, 0, 0, 1, 3] }],
+};
+
+// Acordes rápidos para mostrar como atajos
+const QUICK_CHORDS = ['LAm','MIm','DO','RE','SOL','FA','SI','LA','MI','RE7','SOL7','FA#m','DOsus4','REsus4','SIb'];
+
+// Normalizar entrada del usuario → clave en CHORD_DB
+function normalizeChordKey(input) {
+  let s = input.trim().toUpperCase()
+    .replace(/[ÁA]/g, 'A').replace(/[ÉE]/g, 'E').replace(/[ÍI]/g, 'I')
+    .replace(/[ÓO]/g, 'O').replace(/[ÚU]/g, 'U');
+  // Quitar espacios
+  s = s.replace(/\s+/g, '');
+  // Normalizar "menor": min → m, menor → m
+  s = s.replace(/MENOR/g, 'M').replace(/MIN/g, 'M');
+  // Normalizar sostenido
+  s = s.replace(/SOSTENIDO/g, '#');
+  // Quitar /bajo (DO/SOL → DO)
+  s = s.replace(/\/.*$/, '');
+  return s;
+}
+
+// Construir diagrama SVG de un acorde
+function buildChordSVG(variation) {
+  const { fret, fingers } = variation;
+  // fingers[0] = cuerda 6 (grave), fingers[5] = cuerda 1 (aguda)
+  // En el diagrama mostramos de izquierda a derecha: cuerda 6 → cuerda 1
+
+  const W = 160, H = 180;
+  const marginLeft = 28, marginTop = 40;
+  const stringSpacing = 22;
+  const fretSpacing = 28;
+  const numStrings = 6;
+  const numFrets = 5;
+  const nutY = marginTop;
+
+  // Calcular el traste mínimo real (excluyendo 0 y -1)
+  const frettedNotes = fingers.filter(f => f > 0);
+  const minFret = frettedNotes.length ? Math.min(...frettedNotes) : 1;
+  const startFret = fret > 0 ? fret : (minFret > 3 ? minFret : 1);
+  const showFretNum = startFret > 1;
+
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
+
+  // Fondo
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const colLine = isDark ? '#5C5248' : '#C4BDB5';
+  const colDot  = '#C2410C';
+  const colText = isDark ? '#F5F0EB' : '#1C1917';
+  const colOpen = isDark ? '#9CA3AF' : '#6B7280';
+  const colNut  = isDark ? '#F5F0EB' : '#1C1917';
+
+  // Cejuela o número de traste
+  if (startFret === 1) {
+    // Cejuela gruesa
+    svg += `<rect x="${marginLeft}" y="${nutY - 4}" width="${stringSpacing * (numStrings-1)}" height="6" rx="2" fill="${colNut}"/>`;
+  } else {
+    svg += `<text x="${marginLeft - 8}" y="${nutY + fretSpacing * 0.6}" font-size="11" fill="${colText}" text-anchor="end" font-family="monospace">${startFret}</text>`;
+    svg += `<line x1="${marginLeft}" y1="${nutY}" x2="${marginLeft + stringSpacing*(numStrings-1)}" y2="${nutY}" stroke="${colLine}" stroke-width="1.5"/>`;
+  }
+
+  // Trastes (líneas horizontales)
+  for (let f = 1; f <= numFrets; f++) {
+    const y = nutY + f * fretSpacing;
+    svg += `<line x1="${marginLeft}" y1="${y}" x2="${marginLeft + stringSpacing*(numStrings-1)}" y2="${y}" stroke="${colLine}" stroke-width="1"/>`;
+  }
+
+  // Cuerdas (líneas verticales)
+  for (let s = 0; s < numStrings; s++) {
+    const x = marginLeft + s * stringSpacing;
+    svg += `<line x1="${x}" y1="${nutY}" x2="${x}" y2="${nutY + numFrets * fretSpacing}" stroke="${colLine}" stroke-width="1.2"/>`;
+  }
+
+  // Puntos de los dedos y marcas
+  for (let s = 0; s < numStrings; s++) {
+    const x = marginLeft + s * stringSpacing;
+    const f = fingers[s];
+
+    if (f === -1) {
+      // No se toca: X encima
+      svg += `<text x="${x}" y="${nutY - 10}" font-size="12" fill="${colOpen}" text-anchor="middle" font-weight="bold">✕</text>`;
+    } else if (f === 0) {
+      // Al aire: círculo encima
+      svg += `<circle cx="${x}" cy="${nutY - 10}" r="5" fill="none" stroke="${colOpen}" stroke-width="1.5"/>`;
+    } else {
+      // Dedo en traste
+      const relFret = f - startFret + 1;
+      if (relFret >= 1 && relFret <= numFrets) {
+        const cy = nutY + (relFret - 0.5) * fretSpacing;
+        svg += `<circle cx="${x}" cy="${cy}" r="9" fill="${colDot}"/>`;
+      }
+    }
+  }
+
+  // Detectar cejilla (varios dedos en el mismo traste mínimo)
+  const barreCount = fingers.filter(f => f === minFret && minFret > 0).length;
+  if (barreCount >= 4) {
+    const relFret = minFret - startFret + 1;
+    if (relFret >= 1 && relFret <= numFrets) {
+      const cy = nutY + (relFret - 0.5) * fretSpacing;
+      const firstS = fingers.indexOf(minFret);
+      const lastS  = fingers.lastIndexOf(minFret);
+      const x1 = marginLeft + firstS * stringSpacing;
+      const x2 = marginLeft + lastS  * stringSpacing;
+      svg += `<rect x="${x1-9}" y="${cy-9}" width="${x2-x1+18}" height="18" rx="9" fill="${colDot}" opacity="0.85"/>`;
+    }
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function lookupChord(raw) {
+  const key = normalizeChordKey(raw);
+  // Buscar exacto primero
+  if (CHORD_DB[key]) return { key, variations: CHORD_DB[key] };
+  // Buscar parcial (por si hay alias)
+  for (const k of Object.keys(CHORD_DB)) {
+    if (k === key) return { key: k, variations: CHORD_DB[k] };
+  }
+  return null;
+}
+
+function renderChordResult(raw) {
+  const result = document.getElementById('chord-result');
+  if (!raw.trim()) { result.innerHTML = ''; return; }
+
+  const found = lookupChord(raw);
+  if (found) {
+    let html = `<div class="chord-diagram">
+      <div class="chord-name-display">${escapeHtml(raw)}</div>
+      <div class="chord-svg-wrap">`;
+    found.variations.forEach(v => {
+      html += `<div class="chord-variation-item">
+        <div class="chord-variation-label">${escapeHtml(v.label)}</div>
+        ${buildChordSVG(v)}
+      </div>`;
+    });
+    html += `</div>`;
+    // Botón externo siempre disponible como referencia adicional
+    const ugQuery = encodeURIComponent(raw.trim() + ' chord');
+    html += `<a class="btn-external-chord" href="https://www.ultimate-guitar.com/search.php?search_type=chords&value=${ugQuery}" target="_blank" rel="noopener">🔗 Ver más en Ultimate Guitar</a>`;
+    html += `</div>`;
+    result.innerHTML = html;
+  } else {
+    // No encontrado: ofrecer búsqueda externa
+    const ugQuery = encodeURIComponent(raw.trim() + ' chord guitar');
+    result.innerHTML = `<div class="chord-not-found">
+      <div style="font-size:1.8rem;margin-bottom:0.5rem">🤔</div>
+      <div>No tengo el diagrama de <strong>${escapeHtml(raw)}</strong> en mi base de datos.</div>
+      <div style="margin-top:0.25rem;font-size:0.82rem;color:var(--text3)">Puedes buscarlo en Ultimate Guitar:</div>
+      <a class="btn-external-chord" href="https://www.ultimate-guitar.com/search.php?search_type=chords&value=${ugQuery}" target="_blank" rel="noopener">🔗 Buscar en Ultimate Guitar</a>
+    </div>`;
+  }
+}
+
+function openChordModal() {
+  document.getElementById('chord-modal').classList.add('open');
+  document.getElementById('chord-result').innerHTML = '';
+  document.getElementById('chord-search-input').value = '';
+  // Mostrar acordes rápidos de la canción actual
+  renderQuickChordBtns();
+  setTimeout(() => document.getElementById('chord-search-input').focus(), 300);
+}
+
+function closeChordModal() {
+  document.getElementById('chord-modal').classList.remove('open');
+}
+
+function renderQuickChordBtns() {
+  const container = document.getElementById('chord-quick-btns');
+  // Mostrar acordes de la canción actual si hay una abierta, si no los comunes
+  let chords = QUICK_CHORDS;
+  if (state.currentSongId) {
+    const song = getSong(state.currentSongId);
+    if (song) {
+      // Extraer acordes únicos del contenido
+      const extracted = extractChordsFromContent(song.content);
+      if (extracted.length > 0) chords = extracted;
+    }
+  }
+  container.innerHTML = chords.slice(0, 20).map(c =>
+    `<button class="chord-quick-btn" onclick="renderChordResult('${c.replace(/'/g,"\\'")}');document.getElementById('chord-search-input').value='${c.replace(/'/g,"\\'")}'">${escapeHtml(c)}</button>`
+  ).join('');
+}
+
+function extractChordsFromContent(content) {
+  const seen = new Set();
+  const result = [];
+  content.split('\n').forEach(line => {
+    if (isChordLine(line)) {
+      line.trim().split(/\s+/).forEach(token => {
+        const clean = token.replace(/[()]/g, '');
+        if (clean && isChordToken(clean) && !seen.has(clean)) {
+          seen.add(clean);
+          result.push(clean);
+        }
+      });
+    }
+  });
+  return result;
+}
+
+// ============================================================
+// EXPONER FUNCIONES GLOBALES PARA ONCLICK INLINE
 // ============================================================
 
 window.openAnnotationEditor = openAnnotationEditor;
 window.openCommonEditor = openCommonEditor;
+window.renderChordResult = renderChordResult;
 
 // ============================================================
 // ARRANCAR
